@@ -1,12 +1,12 @@
 'use client';
 
 import { useState } from 'react';
-import { apiClient } from '@/lib/api';
+import { apiClient, SQLResponse } from '@/lib/api';
 
 export default function ExplorePage() {
   const [sql, setSql] = useState('');
   const [loading, setLoading] = useState(false);
-  const [result, setResult] = useState<any>(null);
+  const [result, setResult] = useState<SQLResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -110,9 +110,9 @@ export default function ExplorePage() {
                   </tr>
                 </thead>
                 <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-                  {result.results.map((row: any, i: number) => (
+                  {result.results.map((row, i: number) => (
                     <tr key={i}>
-                      {Object.values(row).map((value: any, j: number) => (
+                      {Object.values(row).map((value, j: number) => (
                         <td
                           key={j}
                           className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-300"

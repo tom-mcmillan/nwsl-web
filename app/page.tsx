@@ -9,7 +9,7 @@ export default function Home() {
             NWSL Data Platform
           </h1>
           <p className="mt-6 text-lg leading-8 text-gray-600 dark:text-gray-400">
-            Access comprehensive National Women's Soccer League data through our powerful analytics platform
+            Access comprehensive National Women&apos;s Soccer League data through our powerful analytics platform
           </p>
           <div className="mt-10 flex items-center justify-center gap-x-6">
             <Link

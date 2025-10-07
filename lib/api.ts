@@ -8,7 +8,7 @@ export interface QueryResponse {
   results: Array<{
     analysis?: string;
     summary?: string;
-    data?: any;
+    data?: unknown;
   }>;
   row_count: number;
 }
@@ -18,7 +18,7 @@ export interface SQLRequest {
 }
 
 export interface SQLResponse {
-  results: any[];
+  results: Record<string, unknown>[];
   row_count: number;
 }
 

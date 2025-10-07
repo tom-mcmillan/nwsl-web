@@ -1,12 +1,12 @@
 'use client';
 
 import { useState } from 'react';
-import { apiClient } from '@/lib/api';
+import { apiClient, QueryResponse } from '@/lib/api';
 
 export default function QueryPage() {
   const [query, setQuery] = useState('');
   const [loading, setLoading] = useState(false);
-  const [result, setResult] = useState<any>(null);
+  const [result, setResult] = useState<QueryResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -93,7 +93,7 @@ export default function QueryPage() {
             Results ({result.row_count} {result.row_count === 1 ? 'result' : 'results'})
           </h2>
           <div className="space-y-4">
-            {result.results.map((item: any, i: number) => (
+            {result.results.map((item, i: number) => (
               <div key={i} className="border-b border-gray-200 dark:border-gray-700 last:border-0 pb-4 last:pb-0">
                 {item.summary && (
                   <div className="mb-2">
