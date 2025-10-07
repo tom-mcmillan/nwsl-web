@@ -107,14 +107,14 @@ export default function QueryPage() {
                     <p className="text-gray-700 dark:text-gray-300">{item.analysis}</p>
                   </div>
                 )}
-                {item.data && (
+                {item.data ? (
                   <div>
                     <h3 className="font-semibold text-gray-900 dark:text-white mb-2">Data:</h3>
                     <pre className="bg-gray-50 dark:bg-gray-900 p-4 rounded-md overflow-x-auto text-sm">
-                      {JSON.stringify(item.data as Record<string, unknown>, null, 2)}
+                      {JSON.stringify(item.data, null, 2)}
                     </pre>
                   </div>
-                )}
+                ) : null}
               </div>
             ))}
           </div>
