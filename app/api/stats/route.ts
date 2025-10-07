@@ -4,12 +4,12 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8080';
 
 export async function GET() {
   try {
-    // Fetch database statistics
+    // Fetch database statistics using Kimball schema
     const statsQueries = [
-      'SELECT COUNT(*) as count FROM matches',
-      'SELECT COUNT(DISTINCT player_id) as count FROM players',
-      'SELECT COUNT(DISTINCT team_id) as count FROM teams',
-      'SELECT COUNT(*) as count FROM events',
+      'SELECT COUNT(*) as count FROM dim_match',
+      'SELECT COUNT(DISTINCT player_id) as count FROM dim_player',
+      'SELECT COUNT(DISTINCT contestant_id) as count FROM dim_team',
+      'SELECT COUNT(*) as count FROM fact_event',
     ];
 
     const results = await Promise.all(

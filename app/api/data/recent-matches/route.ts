@@ -1,18 +1,18 @@
 import { NextResponse } from 'next/server';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8080';
 
 export async function GET() {
   try {
     const sql = `
       SELECT
         match_date,
-        home_team,
-        away_team,
+        home_team_name as home_team,
+        away_team_name as away_team,
         home_score,
         away_score,
         attendance
-      FROM matches
+      FROM agg_team_match
       ORDER BY match_date DESC
       LIMIT 10
     `;

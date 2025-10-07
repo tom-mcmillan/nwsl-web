@@ -11,8 +11,9 @@ export async function GET() {
         goals,
         assists,
         matches_played
-      FROM player_stats
-      WHERE season = 2024
+      FROM agg_player_season
+      WHERE season_year = 2024
+        AND competition_type = 'regular_season'
       ORDER BY goals DESC
       LIMIT 10
     `;
