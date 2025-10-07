@@ -2,19 +2,31 @@ import { NextResponse } from 'next/server';
 
 export async function POST() {
   try {
+    const workflowId = process.env.CHATKIT_WORKFLOW_ID;
+    const apiKey = process.env.OPENAI_API_KEY;
+
+    console.log('Creating ChatKit session');
+    console.log('Workflow ID:', workflowId);
+    console.log('API Key present:', !!apiKey);
+    console.log('API Key first 20 chars:', apiKey?.substring(0, 20));
+
+    const requestBody = {
+      workflow: {
+        id: workflowId
+      },
+      user: 'nwsl-web-user-' + Date.now(),
+    };
+
+    console.log('Request body:', JSON.stringify(requestBody, null, 2));
+
     const response = await fetch('https://api.openai.com/v1/chatkit/sessions', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'OpenAI-Beta': 'chatkit_beta=v1',
-        'Authorization': `Bearer ${process.env.OPENAI_API_KEY}`,
+        'Authorization': `Bearer ${apiKey}`,
       },
-      body: JSON.stringify({
-        workflow: {
-          id: process.env.CHATKIT_WORKFLOW_ID
-        },
-        user: 'nwsl-web-user',
-      }),
+      body: JSON.stringify(requestBody),
     });
 
     if (!response.ok) {

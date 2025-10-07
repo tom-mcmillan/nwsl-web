@@ -58,20 +58,21 @@ export default function Home() {
   // ChatKit setup
   const { control } = useChatKit({
     api: {
-      async getClientSecret(existing) {
-        if (existing) {
-          // For now, just create a new session each time
-          // In production, you'd implement session refresh logic here
+      async getClientSecret(currentClientSecret) {
+        if (!currentClientSecret) {
+          // Create new session
+          const res = await fetch('/api/chatkit/start', { method: 'POST' });
+          const { client_secret } = await res.json();
+          return client_secret;
         }
 
-        const res = await fetch('/api/chatkit/session', {
+        // Refresh existing session
+        const res = await fetch('/api/chatkit/refresh', {
           method: 'POST',
+          body: JSON.stringify({ currentClientSecret }),
           headers: {
             'Content-Type': 'application/json',
           },
-          body: JSON.stringify({
-            context: buildChatContext()
-          }),
         });
         const { client_secret } = await res.json();
         return client_secret;

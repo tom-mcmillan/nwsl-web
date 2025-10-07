@@ -34,48 +34,38 @@ export default function ExplorePage() {
   ];
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
-          SQL Explorer
-        </h1>
-        <p className="mt-2 text-gray-600 dark:text-gray-400">
-          Execute SQL queries directly against the NWSL database
-        </p>
-        <p className="mt-1 text-sm text-amber-600 dark:text-amber-400">
-          Note: Only SELECT and WITH statements are allowed (read-only access)
-        </p>
-      </div>
+    <div className="max-w-7xl mx-auto px-6 py-8">
+      <h1 className="text-2xl font-medium mb-6">SQL Explorer</h1>
+      <p className="mb-6 text-sm">Direct database access (read-only). Only SELECT and WITH statements are allowed.</p>
 
       <form onSubmit={handleSubmit} className="mb-8">
         <div className="mb-4">
           <textarea
             value={sql}
             onChange={(e) => setSql(e.target.value)}
-            placeholder="Enter your SQL query..."
-            rows={6}
-            className="w-full rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-4 py-2 font-mono text-sm text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:border-indigo-500 focus:ring-indigo-500"
+            placeholder="SELECT * FROM matches LIMIT 10;"
+            rows={10}
+            className="w-full px-4 py-3 text-sm"
+            autoFocus
           />
         </div>
         <button
           type="submit"
           disabled={loading || !sql.trim()}
-          className="rounded-md bg-indigo-600 px-6 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed"
+          className="px-6 py-2"
         >
           {loading ? 'Executing...' : 'Execute Query'}
         </button>
       </form>
 
       <div className="mb-8">
-        <h2 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">
-          Example queries:
-        </h2>
+        <h2 className="font-medium mb-3">Example Queries</h2>
         <div className="space-y-2">
           {exampleQueries.map((example, i) => (
             <button
               key={i}
               onClick={() => setSql(example)}
-              className="block w-full text-left text-sm px-3 py-2 rounded-md bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 font-mono"
+              className="block w-full text-left px-4 py-2 text-xs font-mono"
             >
               {example}
             </button>
@@ -84,40 +74,33 @@ export default function ExplorePage() {
       </div>
 
       {error && (
-        <div className="mb-8 rounded-md bg-red-50 dark:bg-red-900/20 p-4">
-          <p className="text-sm text-red-800 dark:text-red-400">{error}</p>
+        <div className="mb-8 border border-red-600 p-4">
+          <h3 className="font-medium mb-2">SQL Error</h3>
+          <p className="text-sm font-mono">{error}</p>
         </div>
       )}
 
       {result && (
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6">
-          <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+        <div>
+          <h2 className="font-medium mb-4">
             Results ({result.row_count} {result.row_count === 1 ? 'row' : 'rows'})
           </h2>
           {result.results.length > 0 ? (
-            <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-                <thead className="bg-gray-50 dark:bg-gray-900">
+            <div className="border border-black overflow-x-auto">
+              <table>
+                <thead>
                   <tr>
                     {Object.keys(result.results[0]).map((key) => (
-                      <th
-                        key={key}
-                        className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider"
-                      >
-                        {key}
-                      </th>
+                      <th key={key}>{key.replace(/_/g, ' ')}</th>
                     ))}
                   </tr>
                 </thead>
-                <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-                  {result.results.map((row, i: number) => (
+                <tbody>
+                  {result.results.map((row, i) => (
                     <tr key={i}>
-                      {Object.values(row).map((value, j: number) => (
-                        <td
-                          key={j}
-                          className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-300"
-                        >
-                          {value === null ? 'NULL' : String(value)}
+                      {Object.values(row).map((value, j) => (
+                        <td key={j} className="text-sm">
+                          {value === null ? '—' : String(value)}
                         </td>
                       ))}
                     </tr>
@@ -126,7 +109,7 @@ export default function ExplorePage() {
               </table>
             </div>
           ) : (
-            <p className="text-gray-600 dark:text-gray-400">No results found</p>
+            <div className="py-8 text-center text-gray-500">No results found</div>
           )}
         </div>
       )}
