@@ -28,7 +28,7 @@ export async function GET() {
     }
 
     const data = await response.json();
-    return NextResponse.json(data);
+    return NextResponse.json({ results: data.results, row_count: data.row_count });
   } catch (error) {
     console.error('Error fetching recent matches:', error);
     return NextResponse.json(

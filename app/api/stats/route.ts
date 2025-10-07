@@ -12,23 +12,36 @@ export async function GET() {
       'SELECT COUNT(*) as count FROM fact_event',
     ];
 
-    const results = await Promise.all(
-      statsQueries.map(async (sql) => {
+    const results = await Promise.allSettled(
+      statsQueries.map(async (sql, index) => {
         const response = await fetch(`${API_URL}/sql`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ sql }),
         });
-        if (!response.ok) throw new Error('Failed to fetch stats');
-        return response.json();
+        if (!response.ok) {
+          const errorText = await response.text();
+          console.error(`Stats query ${index} failed:`, sql, errorText);
+          return null;
+        }
+        const data = await response.json();
+        return data.results; // Extract results array from backend response
       })
     );
 
+    const getValue = (index: number) => {
+      const result = results[index];
+      if (result.status === 'fulfilled' && result.value) {
+        return result.value[0]?.count || 0;
+      }
+      return 0;
+    };
+
     return NextResponse.json({
-      matches: results[0].results[0]?.count || 0,
-      players: results[1].results[0]?.count || 0,
-      teams: results[2].results[0]?.count || 0,
-      events: results[3].results[0]?.count || 0,
+      matches: getValue(0),
+      players: getValue(1),
+      teams: getValue(2),
+      events: getValue(3),
     });
   } catch (error) {
     console.error('Error fetching stats:', error);

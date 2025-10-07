@@ -29,7 +29,7 @@ export async function GET() {
     }
 
     const data = await response.json();
-    return NextResponse.json({ results: data, row_count: data.length });
+    return NextResponse.json({ results: data.results, row_count: data.row_count });
   } catch (error) {
     console.error('Error fetching top scorers:', error);
     return NextResponse.json(
