@@ -59,6 +59,42 @@ const PanelShell = ({ title, children }: { title: string; children: ReactNode })
   </div>
 );
 
+interface Tab {
+  id: string;
+  label: string;
+}
+
+const TabbedPanelShell = ({
+  tabs,
+  activeTab,
+  onTabChange,
+  children
+}: {
+  tabs: Tab[];
+  activeTab: string;
+  onTabChange: (tabId: string) => void;
+  children: ReactNode;
+}) => (
+  <div className="flex h-full w-full flex-col overflow-hidden rounded border border-gray-300 bg-white shadow-sm">
+    <div className="bg-gray-100 border-b border-gray-300 px-2 py-1 flex items-center gap-1">
+      {tabs.map((tab) => (
+        <button
+          key={tab.id}
+          onClick={() => onTabChange(tab.id)}
+          className={`text-[10px] font-semibold uppercase tracking-wide px-2 py-0.5 rounded transition-colors ${
+            activeTab === tab.id
+              ? 'bg-white text-gray-900 shadow-sm'
+              : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
+          }`}
+        >
+          {tab.label}
+        </button>
+      ))}
+    </div>
+    <div className="flex-1 overflow-auto">{children}</div>
+  </div>
+);
+
 const PlaceholderPanel = ({ label, description }: { label: string; description?: string }) => (
   <div className="flex h-full items-center justify-center bg-gray-50 text-center text-xs text-gray-500">
     <div>
@@ -73,6 +109,11 @@ export default function Home() {
   const [panels, setPanels] = useState<PanelMap>({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  // Tab states for each panel
+  const [topLeftTab, setTopLeftTab] = useState('standings');
+  const [topRightTab, setTopRightTab] = useState('chart1');
+  const [bottomTab, setBottomTab] = useState('team-stats');
 
   const standings = panels['league-standings']?.results ?? [];
   const topScorers = panels['top-scorers']?.results ?? [];
@@ -275,41 +316,107 @@ export default function Home() {
                   className="flex h-full w-full"
                   autoSaveId="nwsl-top-row"
                 >
-                  {/* Left panel - Data */}
+                  {/* Left panel - Data with tabs */}
                   <Panel minSize={20} defaultSize={33}>
                     <div className="flex h-full w-full p-1">
-                      <PanelShell title="Data Panel">
-                        <PlaceholderPanel
-                          label="Data Panel"
-                          description="League standings and top scorers data will go here."
-                        />
-                      </PanelShell>
+                      <TabbedPanelShell
+                        tabs={[
+                          { id: 'standings', label: 'Standings' },
+                          { id: 'scorers', label: 'Top Scorers' },
+                          { id: 'schedule', label: 'Schedule' }
+                        ]}
+                        activeTab={topLeftTab}
+                        onTabChange={setTopLeftTab}
+                      >
+                        {topLeftTab === 'standings' && (
+                          <PlaceholderPanel
+                            label="League Standings"
+                            description="Standings table will go here"
+                          />
+                        )}
+                        {topLeftTab === 'scorers' && (
+                          <PlaceholderPanel
+                            label="Top Scorers"
+                            description="Top scorers table will go here"
+                          />
+                        )}
+                        {topLeftTab === 'schedule' && (
+                          <PlaceholderPanel
+                            label="Schedule"
+                            description="Match schedule will go here"
+                          />
+                        )}
+                      </TabbedPanelShell>
                     </div>
                   </Panel>
                   <VerticalResizeHandle />
-                  {/* Right panel - Graphic */}
+                  {/* Right panel - Graphic with tabs */}
                   <Panel minSize={30} defaultSize={67}>
                     <div className="flex h-full w-full p-1">
-                      <PanelShell title="Graphic Panel">
-                        <PlaceholderPanel
-                          label="Graphic Panel"
-                          description="Add visualization or chart here."
-                        />
-                      </PanelShell>
+                      <TabbedPanelShell
+                        tabs={[
+                          { id: 'chart1', label: 'Chart 1' },
+                          { id: 'chart2', label: 'Chart 2' },
+                          { id: 'viz', label: 'Visualization' }
+                        ]}
+                        activeTab={topRightTab}
+                        onTabChange={setTopRightTab}
+                      >
+                        {topRightTab === 'chart1' && (
+                          <PlaceholderPanel
+                            label="Chart 1"
+                            description="First chart will go here"
+                          />
+                        )}
+                        {topRightTab === 'chart2' && (
+                          <PlaceholderPanel
+                            label="Chart 2"
+                            description="Second chart will go here"
+                          />
+                        )}
+                        {topRightTab === 'viz' && (
+                          <PlaceholderPanel
+                            label="Visualization"
+                            description="Custom visualization will go here"
+                          />
+                        )}
+                      </TabbedPanelShell>
                     </div>
                   </Panel>
                 </PanelGroup>
               </Panel>
               <HorizontalResizeHandle />
-              {/* Bottom Row - 1 large data panel */}
+              {/* Bottom Row - 1 large data panel with tabs */}
               <Panel defaultSize={50} minSize={30}>
                 <div className="flex h-full w-full p-1">
-                  <PanelShell title="Data Panel">
-                    <PlaceholderPanel
-                      label="Data Panel"
-                      description="Add supporting metrics, notes, or alerts."
-                    />
-                  </PanelShell>
+                  <TabbedPanelShell
+                    tabs={[
+                      { id: 'team-stats', label: 'Team Stats' },
+                      { id: 'player-stats', label: 'Player Stats' },
+                      { id: 'match-details', label: 'Match Details' }
+                    ]}
+                    activeTab={bottomTab}
+                    onTabChange={setBottomTab}
+                  >
+                    {bottomTab === 'team-stats' && (
+                      <PlaceholderPanel
+                        label="Team Statistics"
+                        description="Team performance stats will go here"
+                      />
+                    )}
+                    {bottomTab === 'player-stats' && (
+                      <PlaceholderPanel
+                        label="Player Statistics"
+                        description="Player performance stats will go here"
+                      />
+                    )}
+                    {bottomTab === 'match-details' && (
+                      <PlaceholderPanel
+                        label="Match Details"
+                        description="Detailed match information will go here"
+                      />
+                    )}
+                  </TabbedPanelShell>
                 </div>
               </Panel>
             </PanelGroup>
