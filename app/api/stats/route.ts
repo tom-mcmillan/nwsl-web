@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 
-const API_URL = process.env.API_URL || 'http://127.0.0.1:8080';
+import { executeSql } from '@/lib/server/apiClient';
 
 export async function GET() {
   try {
@@ -13,19 +13,14 @@ export async function GET() {
     ];
 
     const results = await Promise.allSettled(
-      statsQueries.map(async (sql, index) => {
-        const response = await fetch(`${API_URL}/sql`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ sql }),
-        });
-        if (!response.ok) {
-          const errorText = await response.text();
-          console.error(`Stats query ${index} failed:`, sql, errorText);
+      statsQueries.map(async (sql) => {
+        try {
+          const data = await executeSql(sql);
+          return data.results; // Extract results array from backend response
+        } catch (error) {
+          console.error('Stats query failed:', sql, error);
           return null;
         }
-        const data = await response.json();
-        return data.results; // Extract results array from backend response
       })
     );
 

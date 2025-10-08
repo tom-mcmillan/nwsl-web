@@ -1,4 +1,4 @@
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
+const API_URL = '/api/proxy';
 
 export interface QueryRequest {
   query: string;
@@ -52,6 +52,7 @@ class NWSLApiClient {
       headers: {
         'Content-Type': 'application/json',
       },
+      cache: 'no-store',
       body: JSON.stringify({ query }),
     });
 
@@ -69,6 +70,7 @@ class NWSLApiClient {
       headers: {
         'Content-Type': 'application/json',
       },
+      cache: 'no-store',
       body: JSON.stringify({ sql }),
     });
 
@@ -81,7 +83,9 @@ class NWSLApiClient {
   }
 
   async health(): Promise<HealthResponse> {
-    const response = await fetch(`${this.baseUrl}/health`);
+    const response = await fetch(`${this.baseUrl}/health`, {
+      cache: 'no-store',
+    });
 
     if (!response.ok) {
       throw new Error(`Health check failed with status ${response.status}`);

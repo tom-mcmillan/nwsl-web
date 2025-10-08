@@ -5,10 +5,13 @@ export async function POST() {
     const workflowId = process.env.CHATKIT_WORKFLOW_ID;
     const apiKey = process.env.OPENAI_API_KEY;
 
-    console.log('Creating ChatKit session');
-    console.log('Workflow ID:', workflowId);
-    console.log('API Key present:', !!apiKey);
-    console.log('API Key first 20 chars:', apiKey?.substring(0, 20));
+    if (!workflowId || !apiKey) {
+      console.error('ChatKit configuration missing workflow ID or API key');
+      return NextResponse.json(
+        { error: 'ChatKit is not configured' },
+        { status: 500 }
+      );
+    }
 
     const requestBody = {
       workflow: {
@@ -16,8 +19,6 @@ export async function POST() {
       },
       user: 'nwsl-web-user-' + Date.now(),
     };
-
-    console.log('Request body:', JSON.stringify(requestBody, null, 2));
 
     const response = await fetch('https://api.openai.com/v1/chatkit/sessions', {
       method: 'POST',
@@ -30,8 +31,8 @@ export async function POST() {
     });
 
     if (!response.ok) {
-      const error = await response.text();
-      console.error('ChatKit session error:', error);
+      const error = await response.text().catch(() => 'Unknown error');
+      console.error('ChatKit session error:', response.status, error);
       throw new Error(`Failed to create ChatKit session: ${response.status}`);
     }
 

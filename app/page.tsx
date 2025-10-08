@@ -1,6 +1,5 @@
 'use client';
 
-import Link from "next/link";
 import { useEffect, useState } from "react";
 import { ChatKit, useChatKit } from '@openai/chatkit-react';
 
@@ -15,45 +14,40 @@ interface DataRow {
   [key: string]: unknown;
 }
 
+interface PanelPayload {
+  panel: {
+    slug: string;
+    title: string;
+    description?: string | null;
+    max_rows: number;
+    tags: string[];
+  };
+  results: DataRow[];
+  row_count: number;
+  columns: string[];
+  execution_time_ms: number;
+}
+
+type PanelMap = Record<string, PanelPayload>;
+
+const DASHBOARD_PANEL_SLUGS = [
+  'league-standings',
+  'top-scorers',
+  'recent-matches',
+  'team-performance',
+] as const;
+
 export default function Home() {
   const [stats, setStats] = useState<Stats | null>(null);
-  const [topScorers, setTopScorers] = useState<DataRow[]>([]);
-  const [recentMatches, setRecentMatches] = useState<DataRow[]>([]);
-  const [standings, setStandings] = useState<DataRow[]>([]);
-  const [teamStats, setTeamStats] = useState<DataRow[]>([]);
+  const [panels, setPanels] = useState<PanelMap>({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [chatWidth, setChatWidth] = useState(400);
   const [isResizing, setIsResizing] = useState(false);
 
-  // Build context for ChatKit
-  const buildChatContext = () => {
-    return {
-      timestamp: new Date().toISOString(),
-      visible_data: {
-        standings: {
-          count: standings.length,
-          sample: standings.slice(0, 5).map(s => ({
-            team: s.team,
-            pts: s.pts,
-            gd: s.gd
-          }))
-        },
-        top_scorers: {
-          count: topScorers.length,
-          sample: topScorers.slice(0, 5)
-        },
-        team_stats: {
-          count: teamStats.length,
-          sample: teamStats.slice(0, 5)
-        }
-      },
-      metadata: {
-        season: '2024',
-        last_updated: new Date().toISOString()
-      }
-    };
-  };
+  const standings = panels['league-standings']?.results ?? [];
+  const topScorers = panels['top-scorers']?.results ?? [];
+  const teamStats = panels['team-performance']?.results ?? [];
 
   // ChatKit setup
   const { control } = useChatKit({
@@ -62,8 +56,15 @@ export default function Home() {
         if (!currentClientSecret) {
           // Create new session
           const res = await fetch('/api/chatkit/start', { method: 'POST' });
-          const { client_secret } = await res.json();
-          return client_secret;
+          if (!res.ok) {
+            const errorBody = await res.json().catch(() => ({}));
+            throw new Error(errorBody?.error || 'Unable to start ChatKit session');
+          }
+          const data = await res.json();
+          if (!data?.client_secret) {
+            throw new Error('ChatKit session did not return a client secret');
+          }
+          return data.client_secret;
         }
 
         // Refresh existing session
@@ -74,8 +75,15 @@ export default function Home() {
             'Content-Type': 'application/json',
           },
         });
-        const { client_secret } = await res.json();
-        return client_secret;
+        if (!res.ok) {
+          const errorBody = await res.json().catch(() => ({}));
+          throw new Error(errorBody?.error || 'Unable to refresh ChatKit session');
+        }
+        const data = await res.json();
+        if (!data?.client_secret) {
+          throw new Error('ChatKit refresh did not return a client secret');
+        }
+        return data.client_secret;
       },
     },
     theme: {
@@ -115,29 +123,28 @@ export default function Home() {
     async function fetchData() {
       try {
         setError(null);
-        const [statsRes, scorersRes, matchesRes, standingsRes, teamStatsRes] = await Promise.all([
+        const [statsRes, panelEntries] = await Promise.all([
           fetch('/api/stats'),
-          fetch('/api/data/top-scorers'),
-          fetch('/api/data/recent-matches'),
-          fetch('/api/data/league-standings'),
-          fetch('/api/data/team-stats'),
+          Promise.all(
+            DASHBOARD_PANEL_SLUGS.map(async (slug) => {
+              const response = await fetch(`/api/panel/${slug}`);
+              if (!response.ok) {
+                const errBody = await response.json().catch(() => ({}));
+                throw new Error(errBody?.error || `Failed to fetch panel: ${slug}`);
+              }
+              const payload: PanelPayload = await response.json();
+              return [slug, payload] as const;
+            })
+          ),
         ]);
 
-        if (!statsRes.ok || !scorersRes.ok || !matchesRes.ok || !standingsRes.ok || !teamStatsRes.ok) {
-          throw new Error('Failed to fetch data');
+        if (!statsRes.ok) {
+          throw new Error('Failed to fetch statistics');
         }
 
-        const statsData = await statsRes.json();
-        const scorersData = await scorersRes.json();
-        const matchesData = await matchesRes.json();
-        const standingsData = await standingsRes.json();
-        const teamStatsData = await teamStatsRes.json();
-
+        const statsData: Stats = await statsRes.json();
         setStats(statsData);
-        setTopScorers(scorersData.results || []);
-        setRecentMatches(matchesData.results || []);
-        setStandings(standingsData.results || []);
-        setTeamStats(teamStatsData.results || []);
+        setPanels(Object.fromEntries(panelEntries));
       } catch (err) {
         console.error('Error fetching data:', err);
         setError(err instanceof Error ? err.message : 'Failed to load data');
@@ -248,7 +255,9 @@ export default function Home() {
           {/* Left Panel - League Standings */}
           <div className="col-span-3 bg-white border border-gray-300 shadow-sm flex flex-col overflow-hidden">
           <div className="bg-gray-100 border-b border-gray-300 px-2 py-1">
-            <h3 className="text-[10px] font-semibold text-gray-700 uppercase tracking-wide">League Standings</h3>
+            <h3 className="text-[10px] font-semibold text-gray-700 uppercase tracking-wide">
+              {panels['league-standings']?.panel.title ?? 'League Standings'}
+            </h3>
           </div>
           <div className="flex-1 overflow-auto">
             {loading ? (
@@ -285,7 +294,9 @@ export default function Home() {
         {/* Center Panel - Top Scorers */}
         <div className="col-span-3 bg-white border border-gray-300 shadow-sm flex flex-col overflow-hidden">
           <div className="bg-gray-100 border-b border-gray-300 px-2 py-1">
-            <h3 className="text-[10px] font-semibold text-gray-700 uppercase tracking-wide">Top Scorers 2024</h3>
+            <h3 className="text-[10px] font-semibold text-gray-700 uppercase tracking-wide">
+              {panels['top-scorers']?.panel.title ?? 'Top Scorers'}
+            </h3>
           </div>
           <div className="flex-1 overflow-auto">
             {loading ? (
@@ -324,7 +335,9 @@ export default function Home() {
         {/* Center-Right Panel - Team Stats */}
         <div className="col-span-3 bg-white border border-gray-300 shadow-sm flex flex-col overflow-hidden">
           <div className="bg-gray-100 border-b border-gray-300 px-2 py-1">
-            <h3 className="text-[10px] font-semibold text-gray-700 uppercase tracking-wide">Team Performance</h3>
+            <h3 className="text-[10px] font-semibold text-gray-700 uppercase tracking-wide">
+              {panels['team-performance']?.panel.title ?? 'Team Performance'}
+            </h3>
           </div>
           <div className="flex-1 overflow-auto">
             {loading ? (
