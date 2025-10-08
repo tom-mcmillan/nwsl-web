@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 
-export async function POST(request: Request) {
+export async function POST() {
   try {
     const workflowId = process.env.CHATKIT_WORKFLOW_ID;
     const apiKey = process.env.OPENAI_API_KEY;
@@ -13,17 +13,12 @@ export async function POST(request: Request) {
       );
     }
 
-    // Get context from request body
-    const body = await request.json().catch(() => ({}));
-    const context = body.context || {};
-
     const requestBody = {
       workflow: {
         id: workflowId,
         version: "2"
       },
       user: 'nwsl-web-user-' + Date.now(),
-      context: JSON.stringify(context)
     };
 
     const response = await fetch('https://api.openai.com/v1/chatkit/sessions', {
