@@ -76,22 +76,20 @@ const TabbedPanelShell = ({
   children: ReactNode;
 }) => (
   <div className="flex h-full w-full flex-col overflow-hidden rounded border border-gray-300 bg-white shadow-sm">
-    <div className="flex items-stretch">
-      {tabs.map((tab) => (
+    <div className="bg-gray-100 border-b border-gray-300 px-2 py-1 flex items-center">
+      {tabs.map((tab, index) => (
         <button
           key={tab.id}
           onClick={() => onTabChange(tab.id)}
-          className={`text-[10px] font-semibold uppercase tracking-wide px-3 py-1 border-r border-gray-300 ${
-            activeTab === tab.id
-              ? 'bg-black text-white'
-              : 'bg-gray-100 text-gray-700'
+          className={`flex-1 text-[10px] font-semibold uppercase tracking-wide text-gray-700 ${
+            index < tabs.length - 1 ? 'border-r border-gray-300' : ''
           }`}
         >
           {tab.label}
         </button>
       ))}
     </div>
-    <div className="flex-1 overflow-auto border-t border-gray-300">{children}</div>
+    <div className="flex-1 overflow-auto">{children}</div>
   </div>
 );
 
