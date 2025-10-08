@@ -314,107 +314,41 @@ export default function Home() {
                   className="flex h-full w-full"
                   autoSaveId="nwsl-top-row"
                 >
-                  {/* Left panel - Data with tabs */}
+                  {/* Left panel - Data */}
                   <Panel minSize={20} defaultSize={33}>
                     <div className="flex h-full w-full p-1">
-                      <TabbedPanelShell
-                        tabs={[
-                          { id: 'standings', label: 'Standings' },
-                          { id: 'scorers', label: 'Top Scorers' },
-                          { id: 'schedule', label: 'Schedule' }
-                        ]}
-                        activeTab={topLeftTab}
-                        onTabChange={setTopLeftTab}
-                      >
-                        {topLeftTab === 'standings' && (
-                          <PlaceholderPanel
-                            label="League Standings"
-                            description="Standings table will go here"
-                          />
-                        )}
-                        {topLeftTab === 'scorers' && (
-                          <PlaceholderPanel
-                            label="Top Scorers"
-                            description="Top scorers table will go here"
-                          />
-                        )}
-                        {topLeftTab === 'schedule' && (
-                          <PlaceholderPanel
-                            label="Schedule"
-                            description="Match schedule will go here"
-                          />
-                        )}
-                      </TabbedPanelShell>
+                      <PanelShell title="Data Panel">
+                        <PlaceholderPanel
+                          label="Data Panel"
+                          description="Add data here"
+                        />
+                      </PanelShell>
                     </div>
                   </Panel>
                   <VerticalResizeHandle />
-                  {/* Right panel - Graphic with tabs */}
+                  {/* Right panel - Graphic */}
                   <Panel minSize={30} defaultSize={67}>
                     <div className="flex h-full w-full p-1">
-                      <TabbedPanelShell
-                        tabs={[
-                          { id: 'chart1', label: 'Chart 1' },
-                          { id: 'chart2', label: 'Chart 2' },
-                          { id: 'viz', label: 'Visualization' }
-                        ]}
-                        activeTab={topRightTab}
-                        onTabChange={setTopRightTab}
-                      >
-                        {topRightTab === 'chart1' && (
-                          <PlaceholderPanel
-                            label="Chart 1"
-                            description="First chart will go here"
-                          />
-                        )}
-                        {topRightTab === 'chart2' && (
-                          <PlaceholderPanel
-                            label="Chart 2"
-                            description="Second chart will go here"
-                          />
-                        )}
-                        {topRightTab === 'viz' && (
-                          <PlaceholderPanel
-                            label="Visualization"
-                            description="Custom visualization will go here"
-                          />
-                        )}
-                      </TabbedPanelShell>
+                      <PanelShell title="Graphic Panel">
+                        <PlaceholderPanel
+                          label="Graphic Panel"
+                          description="Add visualization here"
+                        />
+                      </PanelShell>
                     </div>
                   </Panel>
                 </PanelGroup>
               </Panel>
               <HorizontalResizeHandle />
-              {/* Bottom Row - 1 large data panel with tabs */}
+              {/* Bottom Row - 1 large data panel */}
               <Panel defaultSize={50} minSize={30}>
                 <div className="flex h-full w-full p-1">
-                  <TabbedPanelShell
-                    tabs={[
-                      { id: 'team-stats', label: 'Team Stats' },
-                      { id: 'player-stats', label: 'Player Stats' },
-                      { id: 'match-details', label: 'Match Details' }
-                    ]}
-                    activeTab={bottomTab}
-                    onTabChange={setBottomTab}
-                  >
-                    {bottomTab === 'team-stats' && (
-                      <PlaceholderPanel
-                        label="Team Statistics"
-                        description="Team performance stats will go here"
-                      />
-                    )}
-                    {bottomTab === 'player-stats' && (
-                      <PlaceholderPanel
-                        label="Player Statistics"
-                        description="Player performance stats will go here"
-                      />
-                    )}
-                    {bottomTab === 'match-details' && (
-                      <PlaceholderPanel
-                        label="Match Details"
-                        description="Detailed match information will go here"
-                      />
-                    )}
-                  </TabbedPanelShell>
+                  <PanelShell title="Data Panel">
+                    <PlaceholderPanel
+                      label="Data Panel"
+                      description="Add supporting metrics, notes, or alerts."
+                    />
+                  </PanelShell>
                 </div>
               </Panel>
             </PanelGroup>
