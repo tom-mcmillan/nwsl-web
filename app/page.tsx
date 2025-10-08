@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { ChatKit, useChatKit } from '@openai/chatkit-react';
+import { Panel, PanelGroup, PanelResizeHandle } from 'react-resizable-panels';
 
 interface Stats {
   matches: number;
@@ -37,13 +38,13 @@ const DASHBOARD_PANEL_SLUGS = [
   'team-performance',
 ] as const;
 
+const DEFAULT_LAYOUT = [24, 26, 26, 24];
+
 export default function Home() {
   const [stats, setStats] = useState<Stats | null>(null);
   const [panels, setPanels] = useState<PanelMap>({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [chatWidth, setChatWidth] = useState(400);
-  const [isResizing, setIsResizing] = useState(false);
 
   const standings = panels['league-standings']?.results ?? [];
   const topScorers = panels['top-scorers']?.results ?? [];
@@ -156,29 +157,6 @@ export default function Home() {
     fetchData();
   }, []);
 
-  // Handle resize
-  useEffect(() => {
-    const handleMouseMove = (e: MouseEvent) => {
-      if (!isResizing) return;
-      const newWidth = window.innerWidth - e.clientX;
-      setChatWidth(Math.min(Math.max(newWidth, 300), 800));
-    };
-
-    const handleMouseUp = () => {
-      setIsResizing(false);
-    };
-
-    if (isResizing) {
-      document.addEventListener('mousemove', handleMouseMove);
-      document.addEventListener('mouseup', handleMouseUp);
-    }
-
-    return () => {
-      document.removeEventListener('mousemove', handleMouseMove);
-      document.removeEventListener('mouseup', handleMouseUp);
-    };
-  }, [isResizing]);
-
   const getValueClass = (value: unknown, isPositive: boolean = true) => {
     const num = typeof value === 'number' ? value : typeof value === 'string' ? parseFloat(value) : 0;
     if (num > 0) return isPositive ? 'positive' : 'negative';
@@ -249,143 +227,146 @@ export default function Home() {
       </div>
 
       {/* Main Workspace */}
-      <div className="flex-1 flex gap-1 p-1 overflow-hidden">
-        {/* Data Panels Grid */}
-        <div className="flex-1 grid grid-cols-9 gap-1">
-          {/* Left Panel - League Standings */}
-          <div className="col-span-3 bg-white border border-gray-300 shadow-sm flex flex-col overflow-hidden">
-          <div className="bg-gray-100 border-b border-gray-300 px-2 py-1">
-            <h3 className="text-[10px] font-semibold text-gray-700 uppercase tracking-wide">
-              {panels['league-standings']?.panel.title ?? 'League Standings'}
-            </h3>
-          </div>
-          <div className="flex-1 overflow-auto">
-            {loading ? (
-              <TableSkeleton rows={14} />
-            ) : error ? (
-              <ErrorState message={error} />
-            ) : standings.length > 0 ? (
-              <table className="w-full">
-                <thead className="sticky top-0">
-                  <tr>
-                    <th className="text-center">#</th>
-                    <th>Team</th>
-                    <th className="text-center">PTS</th>
-                    <th className="text-center">GD</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {standings.map((row, i) => (
-                    <tr key={i}>
-                      <td className="text-center text-gray-500 font-medium text-[9px]">{i + 1}</td>
-                      <td className="font-medium">{String(row.team)}</td>
-                      <td className="text-center font-semibold">{String(row.pts)}</td>
-                      <td className={`text-center ${getValueClass(row.gd)}`}>{String(row.gd)}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            ) : (
-              <EmptyState message="No standings data available" />
-            )}
-          </div>
-        </div>
-
-        {/* Center Panel - Top Scorers */}
-        <div className="col-span-3 bg-white border border-gray-300 shadow-sm flex flex-col overflow-hidden">
-          <div className="bg-gray-100 border-b border-gray-300 px-2 py-1">
-            <h3 className="text-[10px] font-semibold text-gray-700 uppercase tracking-wide">
-              {panels['top-scorers']?.panel.title ?? 'Top Scorers'}
-            </h3>
-          </div>
-          <div className="flex-1 overflow-auto">
-            {loading ? (
-              <TableSkeleton rows={20} />
-            ) : error ? (
-              <ErrorState message={error} />
-            ) : topScorers.length > 0 ? (
-              <table className="w-full">
-                <thead className="sticky top-0">
-                  <tr>
-                    <th className="text-center">#</th>
-                    {Object.keys(topScorers[0]).map((key) => (
-                      <th key={key}>{key.replace(/_/g, ' ')}</th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody>
-                  {topScorers.map((row, i) => (
-                    <tr key={i}>
-                      <td className="text-center text-gray-500 font-medium text-[9px]">{i + 1}</td>
-                      {Object.values(row).map((value, j) => (
-                        <td key={j} className={j === 0 ? 'font-medium' : ''}>
-                          {value === null ? '—' : String(value)}
-                        </td>
-                      ))}
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            ) : (
-              <EmptyState message="No top scorers data available" />
-            )}
-          </div>
-        </div>
-
-        {/* Center-Right Panel - Team Stats */}
-        <div className="col-span-3 bg-white border border-gray-300 shadow-sm flex flex-col overflow-hidden">
-          <div className="bg-gray-100 border-b border-gray-300 px-2 py-1">
-            <h3 className="text-[10px] font-semibold text-gray-700 uppercase tracking-wide">
-              {panels['team-performance']?.panel.title ?? 'Team Performance'}
-            </h3>
-          </div>
-          <div className="flex-1 overflow-auto">
-            {loading ? (
-              <TableSkeleton rows={14} />
-            ) : error ? (
-              <ErrorState message={error} />
-            ) : teamStats.length > 0 ? (
-              <table className="w-full">
-                <thead className="sticky top-0">
-                  <tr>
-                    {Object.keys(teamStats[0]).map((key) => (
-                      <th key={key}>{key.replace(/_/g, ' ')}</th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody>
-                  {teamStats.map((row, i) => (
-                    <tr key={i}>
-                      {Object.values(row).map((value, j) => (
-                        <td key={j} className={j === 0 ? 'font-medium' : ''}>
-                          {value === null ? '—' : String(value)}
-                        </td>
-                      ))}
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            ) : (
-              <EmptyState message="No team performance data available" />
-            )}
-          </div>
-        </div>
-
-        </div>
-
-        {/* ChatKit - Standalone to the right */}
-        <div
-          style={{ width: `${chatWidth}px` }}
-          className="flex-shrink-0 overflow-hidden rounded-lg relative"
+      <div className="flex-1 flex p-1 overflow-hidden">
+        <PanelGroup
+          direction="horizontal"
+          className="flex-1 rounded-lg border border-gray-200 bg-gray-100/60"
+          autoSaveId="nwsl-dashboard-panels"
         >
-          {/* Resize Handle */}
-          <div
-            onMouseDown={() => setIsResizing(true)}
-            className={`absolute left-0 top-0 bottom-0 w-1 cursor-col-resize hover:bg-blue-500 transition-colors ${isResizing ? 'bg-blue-500' : 'bg-gray-300'}`}
-            style={{ zIndex: 10 }}
-          />
-          <ChatKit control={control} className="h-full w-full" />
-        </div>
+          <Panel minSize={18} defaultSize={DEFAULT_LAYOUT[0]} className="flex">
+            <div className="m-1 flex-1 bg-white border border-gray-300 shadow-sm flex flex-col overflow-hidden">
+              <div className="bg-gray-100 border-b border-gray-300 px-2 py-1">
+                <h3 className="text-[10px] font-semibold text-gray-700 uppercase tracking-wide">
+                  {panels['league-standings']?.panel.title ?? 'League Standings'}
+                </h3>
+              </div>
+              <div className="flex-1 overflow-auto">
+                {loading ? (
+                  <TableSkeleton rows={14} />
+                ) : error ? (
+                  <ErrorState message={error} />
+                ) : standings.length > 0 ? (
+                  <table className="w-full">
+                    <thead className="sticky top-0">
+                      <tr>
+                        <th className="text-center">#</th>
+                        <th>Team</th>
+                        <th className="text-center">PTS</th>
+                        <th className="text-center">GD</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {standings.map((row, i) => (
+                        <tr key={i}>
+                          <td className="text-center text-gray-500 font-medium text-[9px]">{i + 1}</td>
+                          <td className="font-medium">{String(row.team)}</td>
+                          <td className="text-center font-semibold">{String(row.pts)}</td>
+                          <td className={`text-center ${getValueClass(row.gd)}`}>{String(row.gd)}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                ) : (
+                  <EmptyState message="No standings data available" />
+                )}
+              </div>
+            </div>
+          </Panel>
+          <PanelResizeHandle className="group flex items-center justify-center w-2 cursor-col-resize transition-colors bg-gray-200 hover:bg-blue-500">
+            <div className="h-10 w-1 rounded bg-gray-400 group-hover:bg-white" />
+          </PanelResizeHandle>
+          <Panel minSize={18} defaultSize={DEFAULT_LAYOUT[1]} className="flex">
+            <div className="m-1 flex-1 bg-white border border-gray-300 shadow-sm flex flex-col overflow-hidden">
+              <div className="bg-gray-100 border-b border-gray-300 px-2 py-1">
+                <h3 className="text-[10px] font-semibold text-gray-700 uppercase tracking-wide">
+                  {panels['top-scorers']?.panel.title ?? 'Top Scorers'}
+                </h3>
+              </div>
+              <div className="flex-1 overflow-auto">
+                {loading ? (
+                  <TableSkeleton rows={20} />
+                ) : error ? (
+                  <ErrorState message={error} />
+                ) : topScorers.length > 0 ? (
+                  <table className="w-full">
+                    <thead className="sticky top-0">
+                      <tr>
+                        <th className="text-center">#</th>
+                        {Object.keys(topScorers[0]).map((key) => (
+                          <th key={key}>{key.replace(/_/g, ' ')}</th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {topScorers.map((row, i) => (
+                        <tr key={i}>
+                          <td className="text-center text-gray-500 font-medium text-[9px]">{i + 1}</td>
+                          {Object.values(row).map((value, j) => (
+                            <td key={j} className={j === 0 ? 'font-medium' : ''}>
+                              {value === null ? '—' : String(value)}
+                            </td>
+                          ))}
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                ) : (
+                  <EmptyState message="No top scorers data available" />
+                )}
+              </div>
+            </div>
+          </Panel>
+          <PanelResizeHandle className="group flex items-center justify-center w-2 cursor-col-resize transition-colors bg-gray-200 hover:bg-blue-500">
+            <div className="h-10 w-1 rounded bg-gray-400 group-hover:bg-white" />
+          </PanelResizeHandle>
+          <Panel minSize={18} defaultSize={DEFAULT_LAYOUT[2]} className="flex">
+            <div className="m-1 flex-1 bg-white border border-gray-300 shadow-sm flex flex-col overflow-hidden">
+              <div className="bg-gray-100 border-b border-gray-300 px-2 py-1">
+                <h3 className="text-[10px] font-semibold text-gray-700 uppercase tracking-wide">
+                  {panels['team-performance']?.panel.title ?? 'Team Performance'}
+                </h3>
+              </div>
+              <div className="flex-1 overflow-auto">
+                {loading ? (
+                  <TableSkeleton rows={14} />
+                ) : error ? (
+                  <ErrorState message={error} />
+                ) : teamStats.length > 0 ? (
+                  <table className="w-full">
+                    <thead className="sticky top-0">
+                      <tr>
+                        {Object.keys(teamStats[0]).map((key) => (
+                          <th key={key}>{key.replace(/_/g, ' ')}</th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {teamStats.map((row, i) => (
+                        <tr key={i}>
+                          {Object.values(row).map((value, j) => (
+                            <td key={j} className={j === 0 ? 'font-medium' : ''}>
+                              {value === null ? '—' : String(value)}
+                            </td>
+                          ))}
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                ) : (
+                  <EmptyState message="No team performance data available" />
+                )}
+              </div>
+            </div>
+          </Panel>
+          <PanelResizeHandle className="group flex items-center justify-center w-2 cursor-col-resize transition-colors bg-gray-200 hover:bg-blue-500">
+            <div className="h-10 w-1 rounded bg-gray-400 group-hover:bg-white" />
+          </PanelResizeHandle>
+          <Panel minSize={18} defaultSize={DEFAULT_LAYOUT[3]} className="flex">
+            <div className="m-1 flex-1 overflow-hidden rounded-lg bg-white border border-gray-300 shadow-sm relative">
+              <ChatKit control={control} className="h-full w-full" />
+            </div>
+          </Panel>
+        </PanelGroup>
       </div>
     </div>
   );
