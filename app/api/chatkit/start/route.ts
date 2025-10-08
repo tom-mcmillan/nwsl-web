@@ -23,9 +23,7 @@ export async function POST(request: Request) {
         version: "2"
       },
       user: 'nwsl-web-user-' + Date.now(),
-      metadata: {
-        pageContext: JSON.stringify(context)
-      }
+      context: JSON.stringify(context)
     };
 
     const response = await fetch('https://api.openai.com/v1/chatkit/sessions', {
