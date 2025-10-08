@@ -12,8 +12,10 @@ import panel1Tab3Data from '@/public/data/panel-1-tab-3.json';
 interface Stats {
   matches: number;
   players: number;
-  teams: number;
-  events: number;
+  actions: number;
+  passes: number;
+  xt_actions: number;
+  shots: number;
 }
 
 interface DataRow {
@@ -58,33 +60,66 @@ export default function Home() {
   const [stats, setStats] = useState<Stats | null>(null);
   const [loading, setLoading] = useState(true);
 
+  // Track active tabs for dynamic context
+  const [panel1ActiveTab, setPanel1ActiveTab] = useState(0);
+  const [panel2ActiveTab, setPanel2ActiveTab] = useState(0);
+  const [panel3ActiveTab, setPanel3ActiveTab] = useState(0);
+
+  // Panel tab metadata
+  const panel1Tabs = [
+    { label: "Top Scorers 2025", data: panel1Tab1Data },
+    { label: "Top Assists 2025", data: panel1Tab2Data },
+    { label: "Top Keepers 2025", data: panel1Tab3Data }
+  ];
+
+  const panel2Tabs = [
+    { label: "Bell Curve", imagePath: "/images/bell-curve.png" },
+    { label: "Eden Hazard Goal SPADL", imagePath: "/images/eden_hazard_goal_spadl.webp" }
+  ];
+
   // ChatKit setup with page context
   const { control } = useChatKit({
     api: {
       async getClientSecret(currentClientSecret) {
-        // Build context about what's on the page
+        // Build dynamic context about current page state
         const pageContext = {
           currentView: 'NWSL Dashboard',
-          visiblePanels: [
-            'Data Panel (top-left)',
-            'Age Distribution Visualization (top-right)',
-            'Data Panel (bottom)',
-            'ChatKit Assistant (right sidebar)'
-          ],
-          activeVisualization: {
-            title: 'NWSL Player Age Distribution vs. Goal-Scoring Age',
-            finding: 'Goals are scored by younger players on average (0.26 years younger)',
-            data: {
-              playerAge: { mean: 26.46, sd: 4.27, unit: 'years' },
-              goalScoringAge: { mean: 26.20, sd: 4.54, unit: 'years' }
-            }
-          },
-          stats: stats ? {
+          databaseStats: stats ? {
             matches: stats.matches,
             players: stats.players,
-            teams: stats.teams,
-            events: stats.events
-          } : null
+            spadl_actions: stats.actions,
+            passes: stats.passes,
+            xt_actions: stats.xt_actions,
+            shots: stats.shots
+          } : null,
+          activeData: {
+            panel1: {
+              name: 'Top Left Panel',
+              activeTab: panel1Tabs[panel1ActiveTab]?.label,
+              dataType: 'Player Statistics',
+              currentData: panel1Tabs[panel1ActiveTab]?.data,
+              availableTabs: panel1Tabs.map(t => t.label)
+            },
+            panel2: {
+              name: 'Top Right Panel',
+              activeTab: panel2Tabs[panel2ActiveTab]?.label,
+              dataType: 'Visualization',
+              currentImage: panel2Tabs[panel2ActiveTab]?.imagePath,
+              availableTabs: panel2Tabs.map(t => t.label)
+            },
+            panel3: {
+              name: 'Bottom Panel',
+              activeTab: panel1Tabs[panel3ActiveTab]?.label,
+              dataType: 'Player Statistics',
+              currentData: panel1Tabs[panel3ActiveTab]?.data,
+              availableTabs: panel1Tabs.map(t => t.label)
+            }
+          },
+          userCanInteract: {
+            switchTabs: true,
+            viewDifferentData: true,
+            askAboutVisibleData: true
+          }
         };
 
         if (!currentClientSecret) {
@@ -215,12 +250,20 @@ export default function Home() {
             <span className="text-sm font-semibold">{loading ? '...' : (stats?.players || 0).toLocaleString()}</span>
           </div>
           <div className="flex items-center gap-2">
-            <span className="text-[9px] text-gray-500 uppercase">Teams</span>
-            <span className="text-sm font-semibold">{loading ? '...' : (stats?.teams || 0)}</span>
+            <span className="text-[9px] text-gray-500 uppercase">SPADL Actions</span>
+            <span className="text-sm font-semibold">{loading ? '...' : (stats?.actions || 0).toLocaleString()}</span>
           </div>
           <div className="flex items-center gap-2">
-            <span className="text-[9px] text-gray-500 uppercase">Events</span>
-            <span className="text-sm font-semibold">{loading ? '...' : (stats?.events || 0).toLocaleString()}</span>
+            <span className="text-[9px] text-gray-500 uppercase">Passes</span>
+            <span className="text-sm font-semibold">{loading ? '...' : (stats?.passes || 0).toLocaleString()}</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="text-[9px] text-gray-500 uppercase">xT Actions</span>
+            <span className="text-sm font-semibold">{loading ? '...' : (stats?.xt_actions || 0).toLocaleString()}</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="text-[9px] text-gray-500 uppercase">Shots</span>
+            <span className="text-sm font-semibold">{loading ? '...' : (stats?.shots || 0).toLocaleString()}</span>
           </div>
         </div>
       </div>
@@ -249,23 +292,18 @@ export default function Home() {
                   {/* Panel 1 - Left list with tabs */}
                   <Panel minSize={20} defaultSize={33} className="m-2">
                     <DataPanel
-                      tabs={[
-                        { label: "Top Scorers 2025", data: panel1Tab1Data },
-                        { label: "Top Assists 2025", data: panel1Tab2Data },
-                        { label: "Top Keepers 2025", data: panel1Tab3Data }
-                      ]}
+                      tabs={panel1Tabs}
                       height="100%"
+                      onTabChange={setPanel1ActiveTab}
                     />
                   </Panel>
                   <VerticalResizeHandle />
                   {/* Panel 2 - Center images with tabs */}
                   <Panel minSize={30} defaultSize={67} className="m-2">
                     <ImagePanel
-                      tabs={[
-                        { label: "Bell Curve", imagePath: "/images/bell-curve.png" },
-                        { label: "Eden Hazard Goal SPADL", imagePath: "/images/eden_hazard_goal_spadl.webp" }
-                      ]}
+                      tabs={panel2Tabs}
                       height="100%"
+                      onTabChange={setPanel2ActiveTab}
                     />
                   </Panel>
                 </PanelGroup>
@@ -274,12 +312,9 @@ export default function Home() {
               {/* Panel 3 - Bottom details with tabs */}
               <Panel defaultSize={50} minSize={30} className="m-2">
                 <DataPanel
-                  tabs={[
-                    { label: "Top Scorers 2025", data: panel1Tab1Data },
-                    { label: "Top Assists 2025", data: panel1Tab2Data },
-                    { label: "Top Keepers 2025", data: panel1Tab3Data }
-                  ]}
+                  tabs={panel1Tabs}
                   height="100%"
+                  onTabChange={setPanel3ActiveTab}
                 />
               </Panel>
             </PanelGroup>

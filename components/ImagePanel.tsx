@@ -12,13 +12,22 @@ interface ImageTab {
 interface ImagePanelProps {
   tabs: ImageTab[];
   height?: number | string;
+  onTabChange?: (tabIndex: number) => void;
 }
 
 export function ImagePanel({
   tabs,
   height = 400,
+  onTabChange,
 }: ImagePanelProps) {
   const [activeTab, setActiveTab] = useState(0);
+
+  const handleTabChange = (newTab: number) => {
+    setActiveTab(newTab);
+    if (onTabChange) {
+      onTabChange(newTab);
+    }
+  };
 
   const currentImage = tabs[activeTab]?.imagePath;
 
@@ -36,7 +45,7 @@ export function ImagePanel({
       <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
         <Tabs
           value={activeTab}
-          onChange={(_, newValue) => setActiveTab(newValue)}
+          onChange={(_, newValue) => handleTabChange(newValue)}
           sx={{
             minHeight: 36,
             '& .MuiTab-root': {

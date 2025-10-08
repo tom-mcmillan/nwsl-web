@@ -8,8 +8,10 @@ export async function GET() {
     const statsQueries = [
       'SELECT COUNT(*) as count FROM dim_match',
       'SELECT COUNT(DISTINCT player_id) as count FROM dim_player',
-      'SELECT COUNT(DISTINCT contestant_id) as count FROM dim_team',
-      'SELECT COUNT(*) as count FROM fact_event',
+      'SELECT COUNT(*) as count FROM fact_spadl_action',
+      "SELECT COUNT(*) as count FROM fact_spadl_action WHERE type_name IN ('pass', 'cross')",
+      'SELECT COUNT(*) as count FROM fact_action_xt WHERE xt_value > 0',
+      "SELECT COUNT(*) as count FROM fact_spadl_action WHERE type_name IN ('shot', 'shot_penalty', 'shot_freekick')",
     ];
 
     const results = await Promise.allSettled(
@@ -35,8 +37,10 @@ export async function GET() {
     return NextResponse.json({
       matches: getValue(0),
       players: getValue(1),
-      teams: getValue(2),
-      events: getValue(3),
+      actions: getValue(2),
+      passes: getValue(3),
+      xt_actions: getValue(4),
+      shots: getValue(5),
     });
   } catch (error) {
     console.error('Error fetching stats:', error);

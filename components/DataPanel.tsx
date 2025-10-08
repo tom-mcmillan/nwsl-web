@@ -14,6 +14,7 @@ interface DataPanelProps {
   data?: Record<string, unknown>[];
   tabs?: TabData[];
   height?: number | string;
+  onTabChange?: (tabIndex: number) => void;
 }
 
 export function DataPanel({
@@ -21,10 +22,18 @@ export function DataPanel({
   data,
   tabs,
   height = 400,
+  onTabChange,
 }: DataPanelProps) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState(0);
+
+  const handleTabChange = (newTab: number) => {
+    setActiveTab(newTab);
+    if (onTabChange) {
+      onTabChange(newTab);
+    }
+  };
 
   // Use tabs if provided, otherwise use data
   const currentData = useMemo(() => {
@@ -87,7 +96,7 @@ export function DataPanel({
         {tabs ? (
           <Tabs
             value={activeTab}
-            onChange={(_, newValue) => setActiveTab(newValue)}
+            onChange={(_, newValue) => handleTabChange(newValue)}
             sx={{
               minHeight: 36,
               '& .MuiTab-root': {
