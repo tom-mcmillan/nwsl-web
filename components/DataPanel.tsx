@@ -28,7 +28,6 @@ export function DataPanel({
 
   // Use tabs if provided, otherwise use data
   const currentData = tabs ? tabs[activeTab]?.data || [] : data || [];
-  const displayTitle = tabs ? tabs[activeTab]?.label : title;
 
   useEffect(() => {
     // Validate data
@@ -38,7 +37,7 @@ export function DataPanel({
       setError(null);
     }
     setLoading(false);
-  }, [currentData]);
+  }, [tabs, activeTab, data, currentData]);
 
   // Generate columns from data keys
   const columns: GridColDef[] = currentData && currentData.length > 0

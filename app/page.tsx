@@ -1,7 +1,6 @@
 'use client';
 
 import { useEffect, useState } from "react";
-import type { ReactNode } from "react";
 import { ChatKit, useChatKit } from '@openai/chatkit-react';
 import { Panel, PanelGroup, PanelResizeHandle } from 'react-resizable-panels';
 import { DataPanel } from '@/components/DataPanel';
@@ -9,8 +8,6 @@ import { ImagePanel } from '@/components/ImagePanel';
 import panel1Tab1Data from '@/public/data/panel-1.json';
 import panel1Tab2Data from '@/public/data/panel-1-tab-2.json';
 import panel1Tab3Data from '@/public/data/panel-1-tab-3.json';
-import panel2Data from '@/public/data/panel-2.json';
-import panel3Data from '@/public/data/panel-3.json';
 
 interface Stats {
   matches: number;
@@ -57,72 +54,10 @@ const HorizontalResizeHandle = () => (
   </PanelResizeHandle>
 );
 
-const PanelShell = ({ title, children }: { title: string; children: ReactNode }) => (
-  <div className="flex h-full w-full flex-col overflow-hidden rounded border border-gray-300 bg-white shadow-sm">
-    <div className="bg-gray-100 border-b border-gray-300 px-2 py-1">
-      <h3 className="text-[10px] font-semibold uppercase tracking-wide text-gray-700">{title}</h3>
-    </div>
-    <div className="flex-1 overflow-auto">{children}</div>
-  </div>
-);
-
-interface Tab {
-  id: string;
-  label: string;
-}
-
-const TabbedPanelShell = ({
-  tabs,
-  activeTab,
-  onTabChange,
-  children
-}: {
-  tabs: Tab[];
-  activeTab: string;
-  onTabChange: (tabId: string) => void;
-  children: ReactNode;
-}) => (
-  <div className="flex h-full w-full flex-col overflow-hidden rounded border border-gray-300 bg-white shadow-sm">
-    <div className="bg-gray-100 border-b border-gray-300 px-2 py-1 flex items-center">
-      {tabs.map((tab, index) => (
-        <button
-          key={tab.id}
-          onClick={() => onTabChange(tab.id)}
-          className={`flex-1 text-[10px] font-semibold uppercase tracking-wide text-gray-700 ${
-            index < tabs.length - 1 ? 'border-r border-gray-300' : ''
-          }`}
-        >
-          {tab.label}
-        </button>
-      ))}
-    </div>
-    <div className="flex-1 overflow-auto">{children}</div>
-  </div>
-);
-
-const PlaceholderPanel = ({ label, description }: { label: string; description?: string }) => (
-  <div className="flex h-full items-center justify-center text-center text-xs text-gray-500">
-    <div>
-      <p className="text-sm font-semibold uppercase tracking-wide text-gray-600">{label}</p>
-      {description ? <p className="mt-2 text-[11px] text-gray-500">{description}</p> : null}
-    </div>
-  </div>
-);
-
 export default function Home() {
   const [stats, setStats] = useState<Stats | null>(null);
   const [panels, setPanels] = useState<PanelMap>({});
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  // Tab states for each panel
-  const [topLeftTab, setTopLeftTab] = useState('standings');
-  const [topRightTab, setTopRightTab] = useState('chart1');
-  const [bottomTab, setBottomTab] = useState('team-stats');
-
-  const standings = panels['league-standings']?.results ?? [];
-  const topScorers = panels['top-scorers']?.results ?? [];
-  const teamStats = panels['team-performance']?.results ?? [];
 
   // ChatKit setup with page context
   const { control } = useChatKit({
@@ -261,7 +196,6 @@ export default function Home() {
         setPanels(Object.fromEntries(panelEntries));
       } catch (err) {
         console.error('Error fetching data:', err);
-        setError(err instanceof Error ? err.message : 'Failed to load data');
       } finally {
         setLoading(false);
       }
@@ -269,51 +203,6 @@ export default function Home() {
 
     fetchData();
   }, []);
-
-  const getValueClass = (value: unknown, isPositive: boolean = true) => {
-    const num = typeof value === 'number' ? value : typeof value === 'string' ? parseFloat(value) : 0;
-    if (num > 0) return isPositive ? 'positive' : 'negative';
-    if (num < 0) return isPositive ? 'negative' : 'positive';
-    return 'neutral';
-  };
-
-  const retryFetch = () => {
-    setLoading(true);
-    setError(null);
-    window.location.reload();
-  };
-
-  const TableSkeleton = ({ rows = 5 }: { rows?: number }) => (
-    <div className="p-2 space-y-2">
-      {Array.from({ length: rows }).map((_, i) => (
-        <div key={i} className="h-8 bg-gray-200 rounded animate-pulse" />
-      ))}
-    </div>
-  );
-
-  const EmptyState = ({ message = "No data available" }: { message?: string }) => (
-    <div className="flex flex-col items-center justify-center h-40 text-gray-400">
-      <svg className="w-12 h-12 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
-      </svg>
-      <p className="text-xs">{message}</p>
-    </div>
-  );
-
-  const ErrorState = ({ message = "Failed to load data" }: { message?: string }) => (
-    <div className="flex flex-col items-center justify-center h-40 text-red-400">
-      <svg className="w-12 h-12 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-      </svg>
-      <p className="text-xs mb-2">{message}</p>
-      <button
-        onClick={retryFetch}
-        className="text-xs px-3 py-1 bg-gray-100 hover:bg-gray-200 rounded border border-gray-300"
-      >
-        Retry
-      </button>
-    </div>
-  );
 
   return (
     <div className="h-screen flex flex-col bg-gray-100">

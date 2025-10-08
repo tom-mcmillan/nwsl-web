@@ -4,7 +4,7 @@ import { DataGrid, GridColDef } from '@mui/x-data-grid';
 import { Paper } from '@mui/material';
 
 interface DataGridProps {
-  data: any[];
+  data: Record<string, unknown>[];
   title?: string;
 }
 
