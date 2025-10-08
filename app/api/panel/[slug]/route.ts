@@ -1,13 +1,19 @@
 import { NextResponse } from 'next/server';
+import type { NextRequest } from 'next/server';
 
 import { fetchPanel } from '@/lib/server/apiClient';
 
+type Params = { slug: string };
+
+const isPromise = <T>(value: T | Promise<T>): value is Promise<T> =>
+  typeof (value as Promise<T>)?.then === 'function';
+
 export async function GET(
-  request: Request,
-  { params }: { params: { slug: string } }
+  request: NextRequest,
+  context: { params: Params | Promise<Params> }
 ) {
-  const { searchParams } = new URL(request.url);
-  const limitParam = searchParams.get('limit');
+  const params = isPromise(context.params) ? await context.params : context.params;
+  const limitParam = request.nextUrl.searchParams.get('limit');
 
   let limit: number | undefined;
   if (limitParam !== null) {
@@ -32,4 +38,3 @@ export async function GET(
     );
   }
 }
-
