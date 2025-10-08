@@ -117,13 +117,42 @@ export default function Home() {
   const topScorers = panels['top-scorers']?.results ?? [];
   const teamStats = panels['team-performance']?.results ?? [];
 
-  // ChatKit setup
+  // ChatKit setup with page context
   const { control } = useChatKit({
     api: {
       async getClientSecret(currentClientSecret) {
+        // Build context about what's on the page
+        const pageContext = {
+          currentView: 'NWSL Dashboard',
+          visiblePanels: [
+            'Data Panel (top-left)',
+            'Age Distribution Visualization (top-right)',
+            'Data Panel (bottom)',
+            'ChatKit Assistant (right sidebar)'
+          ],
+          activeVisualization: {
+            title: 'NWSL Player Age Distribution vs. Goal-Scoring Age',
+            finding: 'Goals are scored by younger players on average (0.26 years younger)',
+            data: {
+              playerAge: { mean: 26.46, sd: 4.27, unit: 'years' },
+              goalScoringAge: { mean: 26.20, sd: 4.54, unit: 'years' }
+            }
+          },
+          stats: stats ? {
+            matches: stats.matches,
+            players: stats.players,
+            teams: stats.teams,
+            events: stats.events
+          } : null
+        };
+
         if (!currentClientSecret) {
-          // Create new session
-          const res = await fetch('/api/chatkit/start', { method: 'POST' });
+          // Create new session with context
+          const res = await fetch('/api/chatkit/start', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ context: pageContext })
+          });
           if (!res.ok) {
             const errorBody = await res.json().catch(() => ({}));
             throw new Error(errorBody?.error || 'Unable to start ChatKit session');
