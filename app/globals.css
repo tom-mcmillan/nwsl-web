@@ -140,3 +140,12 @@ table tr:hover {
 ::-webkit-scrollbar-thumb:hover {
   background: #999999;
 }
+
+/* ChatKit custom styling - remove white background */
+[data-chatkit-container] {
+  background: transparent !important;
+}
+
+[data-chatkit-thread] {
+  background: transparent !important;
+}

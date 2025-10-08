@@ -1,0 +1,47 @@
+[
+  {
+    "id": 1,
+    "match_date": "2025-06-15",
+    "home_team": "Portland Thorns",
+    "away_team": "Washington Spirit",
+    "home_score": 2,
+    "away_score": 1,
+    "attendance": 18234
+  },
+  {
+    "id": 2,
+    "match_date": "2025-06-15",
+    "home_team": "NJ/NY Gotham FC",
+    "away_team": "San Diego Wave",
+    "home_score": 3,
+    "away_score": 2,
+    "attendance": 15678
+  },
+  {
+    "id": 3,
+    "match_date": "2025-06-16",
+    "home_team": "Orlando Pride",
+    "away_team": "Chicago Red Stars",
+    "home_score": 1,
+    "away_score": 1,
+    "attendance": 12456
+  },
+  {
+    "id": 4,
+    "match_date": "2025-06-16",
+    "home_team": "Angel City FC",
+    "away_team": "Houston Dash",
+    "home_score": 2,
+    "away_score": 0,
+    "attendance": 19823
+  },
+  {
+    "id": 5,
+    "match_date": "2025-06-17",
+    "home_team": "Seattle Reign",
+    "away_team": "Kansas City Current",
+    "home_score": 0,
+    "away_score": 2,
+    "attendance": 14567
+  }
+]

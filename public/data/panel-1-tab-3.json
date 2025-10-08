@@ -1,0 +1,37 @@
+[
+  {
+    "id": 1,
+    "player_name": "Alyssa Naeher",
+    "team_name": "Chicago Red Stars",
+    "clean_sheets": 12,
+    "saves_per_90": 4.8
+  },
+  {
+    "id": 2,
+    "player_name": "Adrianna Franch",
+    "team_name": "Kansas City Current",
+    "clean_sheets": 10,
+    "saves_per_90": 4.5
+  },
+  {
+    "id": 3,
+    "player_name": "Casey Murphy",
+    "team_name": "North Carolina Courage",
+    "clean_sheets": 9,
+    "saves_per_90": 4.2
+  },
+  {
+    "id": 4,
+    "player_name": "Kailen Sheridan",
+    "team_name": "San Diego Wave",
+    "clean_sheets": 8,
+    "saves_per_90": 3.9
+  },
+  {
+    "id": 5,
+    "player_name": "Aubrey Kingsbury",
+    "team_name": "Washington Spirit",
+    "clean_sheets": 7,
+    "saves_per_90": 3.7
+  }
+]

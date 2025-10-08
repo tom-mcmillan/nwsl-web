@@ -1,0 +1,37 @@
+[
+  {
+    "id": 1,
+    "player_name": "Alex Morgan",
+    "team_name": "San Diego Wave",
+    "assists_per_90": 0.45,
+    "key_passes": 3.2
+  },
+  {
+    "id": 2,
+    "player_name": "Rose Lavelle",
+    "team_name": "OL Reign",
+    "assists_per_90": 0.38,
+    "key_passes": 2.8
+  },
+  {
+    "id": 3,
+    "player_name": "Sam Mewis",
+    "team_name": "Kansas City Current",
+    "assists_per_90": 0.33,
+    "key_passes": 2.5
+  },
+  {
+    "id": 4,
+    "player_name": "Megan Rapinoe",
+    "team_name": "OL Reign",
+    "assists_per_90": 0.31,
+    "key_passes": 2.3
+  },
+  {
+    "id": 5,
+    "player_name": "Christen Press",
+    "team_name": "Angel City FC",
+    "assists_per_90": 0.29,
+    "key_passes": 2.1
+  }
+]

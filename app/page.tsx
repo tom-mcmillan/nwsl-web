@@ -4,6 +4,13 @@ import { useEffect, useState } from "react";
 import type { ReactNode } from "react";
 import { ChatKit, useChatKit } from '@openai/chatkit-react';
 import { Panel, PanelGroup, PanelResizeHandle } from 'react-resizable-panels';
+import { DataPanel } from '@/components/DataPanel';
+import { ImagePanel } from '@/components/ImagePanel';
+import panel1Tab1Data from '@/public/data/panel-1.json';
+import panel1Tab2Data from '@/public/data/panel-1-tab-2.json';
+import panel1Tab3Data from '@/public/data/panel-1-tab-3.json';
+import panel2Data from '@/public/data/panel-2.json';
+import panel3Data from '@/public/data/panel-3.json';
 
 interface Stats {
   matches: number;
@@ -39,14 +46,14 @@ const DASHBOARD_PANEL_SLUGS = [
 ] as const;
 
 const VerticalResizeHandle = () => (
-  <PanelResizeHandle className="group flex w-2 cursor-col-resize items-center justify-center bg-gray-200 transition-colors hover:bg-blue-500">
-    <div className="h-10 w-1 rounded bg-gray-400 transition-colors group-hover:bg-white" />
+  <PanelResizeHandle className="group flex w-1 cursor-col-resize items-center justify-center bg-gray-200 transition-colors hover:bg-blue-500">
+    <div className="h-8 w-0.5 rounded bg-gray-400 transition-colors group-hover:bg-white" />
   </PanelResizeHandle>
 );
 
 const HorizontalResizeHandle = () => (
-  <PanelResizeHandle className="group flex h-2 cursor-row-resize items-center justify-center bg-gray-200 transition-colors hover:bg-blue-500">
-    <div className="h-1 w-10 rounded bg-gray-400 transition-colors group-hover:bg-white" />
+  <PanelResizeHandle className="group flex h-1 cursor-row-resize items-center justify-center bg-gray-200 transition-colors hover:bg-blue-500">
+    <div className="h-0.5 w-8 rounded bg-gray-400 transition-colors group-hover:bg-white" />
   </PanelResizeHandle>
 );
 
@@ -94,7 +101,7 @@ const TabbedPanelShell = ({
 );
 
 const PlaceholderPanel = ({ label, description }: { label: string; description?: string }) => (
-  <div className="flex h-full items-center justify-center bg-gray-50 text-center text-xs text-gray-500">
+  <div className="flex h-full items-center justify-center text-center text-xs text-gray-500">
     <div>
       <p className="text-sm font-semibold uppercase tracking-wide text-gray-600">{label}</p>
       {description ? <p className="mt-2 text-[11px] text-gray-500">{description}</p> : null}
@@ -209,6 +216,16 @@ export default function Home() {
         maxCount: 5,
         maxSize: 10485760
       },
+      tools: [
+        {
+          id: 'search_docs',
+          label: 'Search docs',
+          shortLabel: 'Docs',
+          placeholderOverride: 'Search documentation',
+          icon: 'book-open',
+          pinned: false
+        }
+      ],
     },
     startScreen: {
       greeting: '',
@@ -299,7 +316,7 @@ export default function Home() {
   );
 
   return (
-    <div className="h-screen flex flex-col bg-gray-50">
+    <div className="h-screen flex flex-col bg-gray-100">
       {/* Top Stats Bar */}
       <div className="bg-white border-b border-gray-300 shadow-sm">
         <div className="flex items-center px-3 py-1.5 gap-6">
@@ -323,10 +340,10 @@ export default function Home() {
       </div>
 
       {/* Main Workspace */}
-      <div className="flex-1 overflow-hidden p-1">
+      <div className="flex-1 overflow-hidden p-2">
         <PanelGroup
           direction="horizontal"
-          className="flex h-full rounded-lg border border-gray-200 bg-gray-100/60"
+          className="flex h-full"
           autoSaveId="nwsl-dashboard-layout"
         >
           {/* Left Side - 4 Data Panels in 2 rows */}
@@ -343,72 +360,48 @@ export default function Home() {
                   className="flex h-full w-full"
                   autoSaveId="nwsl-top-row"
                 >
-                  {/* Left panel - Data */}
-                  <Panel minSize={20} defaultSize={33}>
-                    <div className="flex h-full w-full p-1">
-                      <PanelShell title="Data Panel">
-                        <PlaceholderPanel
-                          label="Data Panel"
-                          description="Add data here"
-                        />
-                      </PanelShell>
-                    </div>
+                  {/* Panel 1 - Left list with tabs */}
+                  <Panel minSize={20} defaultSize={33} className="m-2">
+                    <DataPanel
+                      tabs={[
+                        { label: "Top Scorers 2025", data: panel1Tab1Data },
+                        { label: "Top Assists 2025", data: panel1Tab2Data },
+                        { label: "Top Keepers 2025", data: panel1Tab3Data }
+                      ]}
+                      height="100%"
+                    />
                   </Panel>
                   <VerticalResizeHandle />
-                  {/* Right panel - Graphic */}
-                  <Panel minSize={30} defaultSize={67}>
-                    <div className="flex h-full w-full p-1">
-                      <PanelShell title="Graphic Panel">
-                        <div className="flex h-full w-full flex-col bg-white p-4">
-                          <div className="mb-3 text-center">
-                            <h2 className="text-base font-bold text-gray-900">
-                              NWSL Player Age Distribution vs. Goal-Scoring Age
-                            </h2>
-                            <p className="text-xs text-gray-600 mt-1 italic">
-                              Goals are scored by younger players on average (0.26 years younger)
-                            </p>
-                          </div>
-                          <div className="flex-1 flex items-center justify-center">
-                            <img
-                              src="/download.png"
-                              alt="Age Distribution Visualization"
-                              className="max-w-full max-h-full object-contain"
-                            />
-                          </div>
-                          <div className="mt-3 text-[11px] text-gray-600 space-y-1">
-                            <p><strong>Player Age:</strong> Mean = 26.46 years, SD = 4.27 years</p>
-                            <p><strong>Goal-Scoring Age:</strong> Mean = 26.20 years, SD = 4.54 years</p>
-                          </div>
-                        </div>
-                      </PanelShell>
-                    </div>
+                  {/* Panel 2 - Center images with tabs */}
+                  <Panel minSize={30} defaultSize={67} className="m-2">
+                    <ImagePanel
+                      tabs={[
+                        { label: "Bell Curve", imagePath: "/images/bell-curve.png" },
+                        { label: "Eden Hazard Goal SPADL", imagePath: "/images/eden_hazard_goal_spadl.webp" }
+                      ]}
+                      height="100%"
+                    />
                   </Panel>
                 </PanelGroup>
               </Panel>
               <HorizontalResizeHandle />
-              {/* Bottom Row - 1 large data panel */}
-              <Panel defaultSize={50} minSize={30}>
-                <div className="flex h-full w-full p-1">
-                  <PanelShell title="Data Panel">
-                    <PlaceholderPanel
-                      label="Data Panel"
-                      description="Add supporting metrics, notes, or alerts."
-                    />
-                  </PanelShell>
-                </div>
+              {/* Panel 3 - Bottom details with tabs */}
+              <Panel defaultSize={50} minSize={30} className="m-2">
+                <DataPanel
+                  tabs={[
+                    { label: "Top Scorers 2025", data: panel1Tab1Data },
+                    { label: "Top Assists 2025", data: panel1Tab2Data },
+                    { label: "Top Keepers 2025", data: panel1Tab3Data }
+                  ]}
+                  height="100%"
+                />
               </Panel>
             </PanelGroup>
           </Panel>
           <VerticalResizeHandle />
           {/* Right Side - ChatKit (full height) */}
-          <Panel minSize={20} defaultSize={30}>
-            <div className="flex h-full w-full p-1">
-              <PanelShell title="Assistant">
-                <div className="relative h-full w-full overflow-hidden rounded">
-                  <ChatKit control={control} className="h-full w-full" />
-                </div>
-              </PanelShell>
-            </div>
+          <Panel minSize={20} defaultSize={30} className="m-2">
+            <ChatKit control={control} className="h-full w-full rounded-3xl overflow-hidden" />
           </Panel>
         </PanelGroup>
       </div>

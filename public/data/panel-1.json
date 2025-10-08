@@ -1,0 +1,37 @@
+[
+  {
+    "id": 1,
+    "player_name": "Sophia Smith",
+    "team_name": "Portland Thorns",
+    "goals_per_90": 0.82,
+    "shot_accuracy": 0.67
+  },
+  {
+    "id": 2,
+    "player_name": "Trinity Rodman",
+    "team_name": "Washington Spirit",
+    "goals_per_90": 0.71,
+    "shot_accuracy": 0.59
+  },
+  {
+    "id": 3,
+    "player_name": "Mallory Swanson",
+    "team_name": "Chicago Red Stars",
+    "goals_per_90": 0.68,
+    "shot_accuracy": 0.63
+  },
+  {
+    "id": 4,
+    "player_name": "Alex Morgan",
+    "team_name": "San Diego Wave",
+    "goals_per_90": 0.64,
+    "shot_accuracy": 0.61
+  },
+  {
+    "id": 5,
+    "player_name": "Lynn Williams",
+    "team_name": "NJ/NY Gotham FC",
+    "goals_per_90": 0.59,
+    "shot_accuracy": 0.58
+  }
+]

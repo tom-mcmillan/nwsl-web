@@ -1,0 +1,52 @@
+[
+  {
+    "id": 1,
+    "team_name": "Portland Thorns",
+    "wins": 14,
+    "losses": 8,
+    "draws": 4,
+    "goals_for": 42,
+    "goals_against": 28,
+    "points": 46
+  },
+  {
+    "id": 2,
+    "team_name": "Washington Spirit",
+    "wins": 13,
+    "losses": 9,
+    "draws": 4,
+    "goals_for": 39,
+    "goals_against": 31,
+    "points": 43
+  },
+  {
+    "id": 3,
+    "team_name": "NJ/NY Gotham FC",
+    "wins": 12,
+    "losses": 8,
+    "draws": 6,
+    "goals_for": 41,
+    "goals_against": 30,
+    "points": 42
+  },
+  {
+    "id": 4,
+    "team_name": "San Diego Wave",
+    "wins": 11,
+    "losses": 10,
+    "draws": 5,
+    "goals_for": 38,
+    "goals_against": 35,
+    "points": 38
+  },
+  {
+    "id": 5,
+    "team_name": "Orlando Pride",
+    "wins": 10,
+    "losses": 11,
+    "draws": 5,
+    "goals_for": 35,
+    "goals_against": 37,
+    "points": 35
+  }
+]
