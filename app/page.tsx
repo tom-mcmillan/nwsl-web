@@ -257,144 +257,135 @@ export default function Home() {
       {/* Main Workspace */}
       <div className="flex-1 overflow-hidden p-1">
         <PanelGroup
-          direction="vertical"
+          direction="horizontal"
           className="flex h-full rounded-lg border border-gray-200 bg-gray-100/60"
           autoSaveId="nwsl-dashboard-layout"
         >
-          {/* Top Row - 3 Data Panels */}
-          <Panel defaultSize={50} minSize={30}>
+          {/* Left Side - 4 Data Panels in 2 rows */}
+          <Panel minSize={50} defaultSize={70}>
             <PanelGroup
-              direction="horizontal"
+              direction="vertical"
               className="flex h-full w-full"
-              autoSaveId="nwsl-top-row"
+              autoSaveId="nwsl-left-stack"
             >
-              <Panel minSize={20} defaultSize={33}>
-                <div className="flex h-full w-full p-1">
-                  <PanelShell title={panels['league-standings']?.panel.title ?? 'League Standings'}>
-                    {loading ? (
-                      <TableSkeleton rows={14} />
-                    ) : error ? (
-                      <ErrorState message={error} />
-                    ) : standings.length > 0 ? (
-                      <table className="w-full">
-                        <thead className="sticky top-0">
-                          <tr>
-                            <th className="text-center">#</th>
-                            <th>Team</th>
-                            <th className="text-center">PTS</th>
-                            <th className="text-center">GD</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {standings.map((row, i) => (
-                            <tr key={i}>
-                              <td className="text-center text-gray-500 font-medium text-[9px]">{i + 1}</td>
-                              <td className="font-medium">{String(row.team)}</td>
-                              <td className="text-center font-semibold">{String(row.pts)}</td>
-                              <td className={`text-center ${getValueClass(row.gd)}`}>{String(row.gd)}</td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    ) : (
-                      <EmptyState message="No standings data available" />
-                    )}
-                  </PanelShell>
-                </div>
-              </Panel>
-              <VerticalResizeHandle />
-              <Panel minSize={20} defaultSize={34}>
-                <div className="flex h-full w-full p-1">
-                  <PanelShell title={panels['top-scorers']?.panel.title ?? 'Top Scorers 2024'}>
-                    {loading ? (
-                      <TableSkeleton rows={20} />
-                    ) : error ? (
-                      <ErrorState message={error} />
-                    ) : topScorers.length > 0 ? (
-                      <table className="w-full">
-                        <thead className="sticky top-0">
-                          <tr>
-                            <th className="text-center">#</th>
-                            {Object.keys(topScorers[0]).map((key) => (
-                              <th key={key}>{key.replace(/_/g, ' ')}</th>
-                            ))}
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {topScorers.map((row, i) => (
-                            <tr key={i}>
-                              <td className="text-center text-gray-500 font-medium text-[9px]">{i + 1}</td>
-                              {Object.values(row).map((value, j) => (
-                                <td key={j} className={j === 0 ? 'font-medium' : ''}>
-                                  {value === null ? '—' : String(value)}
-                                </td>
+              {/* Top Row - 3 panels */}
+              <Panel defaultSize={50} minSize={30}>
+                <PanelGroup
+                  direction="horizontal"
+                  className="flex h-full w-full"
+                  autoSaveId="nwsl-top-row"
+                >
+                  <Panel minSize={20} defaultSize={33}>
+                    <div className="flex h-full w-full p-1">
+                      <PanelShell title={panels['league-standings']?.panel.title ?? 'League Standings'}>
+                        {loading ? (
+                          <TableSkeleton rows={14} />
+                        ) : error ? (
+                          <ErrorState message={error} />
+                        ) : standings.length > 0 ? (
+                          <table className="w-full">
+                            <thead className="sticky top-0">
+                              <tr>
+                                <th className="text-center">#</th>
+                                <th>Team</th>
+                                <th className="text-center">PTS</th>
+                                <th className="text-center">GD</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {standings.map((row, i) => (
+                                <tr key={i}>
+                                  <td className="text-center text-gray-500 font-medium text-[9px]">{i + 1}</td>
+                                  <td className="font-medium">{String(row.team)}</td>
+                                  <td className="text-center font-semibold">{String(row.pts)}</td>
+                                  <td className={`text-center ${getValueClass(row.gd)}`}>{String(row.gd)}</td>
+                                </tr>
                               ))}
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    ) : (
-                      <EmptyState message="No top scorers data available" />
-                    )}
-                  </PanelShell>
-                </div>
-              </Panel>
-              <VerticalResizeHandle />
-              <Panel minSize={20} defaultSize={33}>
-                <div className="flex h-full w-full p-1">
-                  <PanelShell title={panels['team-performance']?.panel.title ?? 'Team Performance'}>
-                    {loading ? (
-                      <TableSkeleton rows={14} />
-                    ) : error ? (
-                      <ErrorState message={error} />
-                    ) : teamStats.length > 0 ? (
-                      <table className="w-full">
-                        <thead className="sticky top-0">
-                          <tr>
-                            {Object.keys(teamStats[0]).map((key) => (
-                              <th key={key}>{key.replace(/_/g, ' ')}</th>
-                            ))}
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {teamStats.map((row, i) => (
-                            <tr key={i}>
-                              {Object.values(row).map((value, j) => (
-                                <td key={j} className={j === 0 ? 'font-medium' : ''}>
-                                  {value === null ? '—' : String(value)}
-                                </td>
-                              ))}
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    ) : (
-                      <EmptyState message="No team performance data available" />
-                    )}
-                  </PanelShell>
-                </div>
-              </Panel>
-            </PanelGroup>
-          </Panel>
-          <HorizontalResizeHandle />
-          {/* Bottom Row - ChatKit + Data Panel */}
-          <Panel defaultSize={50} minSize={30}>
-            <PanelGroup
-              direction="horizontal"
-              className="flex h-full w-full"
-              autoSaveId="nwsl-bottom-row"
-            >
-              <Panel minSize={40} defaultSize={65}>
-                <div className="flex h-full w-full p-1">
-                  <PanelShell title="Assistant">
-                    <div className="relative h-full w-full overflow-hidden rounded">
-                      <ChatKit control={control} className="h-full w-full" />
+                            </tbody>
+                          </table>
+                        ) : (
+                          <EmptyState message="No standings data available" />
+                        )}
+                      </PanelShell>
                     </div>
-                  </PanelShell>
-                </div>
+                  </Panel>
+                  <VerticalResizeHandle />
+                  <Panel minSize={20} defaultSize={34}>
+                    <div className="flex h-full w-full p-1">
+                      <PanelShell title={panels['top-scorers']?.panel.title ?? 'Top Scorers 2024'}>
+                        {loading ? (
+                          <TableSkeleton rows={20} />
+                        ) : error ? (
+                          <ErrorState message={error} />
+                        ) : topScorers.length > 0 ? (
+                          <table className="w-full">
+                            <thead className="sticky top-0">
+                              <tr>
+                                <th className="text-center">#</th>
+                                {Object.keys(topScorers[0]).map((key) => (
+                                  <th key={key}>{key.replace(/_/g, ' ')}</th>
+                                ))}
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {topScorers.map((row, i) => (
+                                <tr key={i}>
+                                  <td className="text-center text-gray-500 font-medium text-[9px]">{i + 1}</td>
+                                  {Object.values(row).map((value, j) => (
+                                    <td key={j} className={j === 0 ? 'font-medium' : ''}>
+                                      {value === null ? '—' : String(value)}
+                                    </td>
+                                  ))}
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        ) : (
+                          <EmptyState message="No top scorers data available" />
+                        )}
+                      </PanelShell>
+                    </div>
+                  </Panel>
+                  <VerticalResizeHandle />
+                  <Panel minSize={20} defaultSize={33}>
+                    <div className="flex h-full w-full p-1">
+                      <PanelShell title={panels['team-performance']?.panel.title ?? 'Team Performance'}>
+                        {loading ? (
+                          <TableSkeleton rows={14} />
+                        ) : error ? (
+                          <ErrorState message={error} />
+                        ) : teamStats.length > 0 ? (
+                          <table className="w-full">
+                            <thead className="sticky top-0">
+                              <tr>
+                                {Object.keys(teamStats[0]).map((key) => (
+                                  <th key={key}>{key.replace(/_/g, ' ')}</th>
+                                ))}
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {teamStats.map((row, i) => (
+                                <tr key={i}>
+                                  {Object.values(row).map((value, j) => (
+                                    <td key={j} className={j === 0 ? 'font-medium' : ''}>
+                                      {value === null ? '—' : String(value)}
+                                    </td>
+                                  ))}
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        ) : (
+                          <EmptyState message="No team performance data available" />
+                        )}
+                      </PanelShell>
+                    </div>
+                  </Panel>
+                </PanelGroup>
               </Panel>
-              <VerticalResizeHandle />
-              <Panel minSize={20} defaultSize={35}>
+              <HorizontalResizeHandle />
+              {/* Bottom Row - 1 large data panel */}
+              <Panel defaultSize={50} minSize={30}>
                 <div className="flex h-full w-full p-1">
                   <PanelShell title="Data Panel">
                     <PlaceholderPanel
@@ -405,6 +396,17 @@ export default function Home() {
                 </div>
               </Panel>
             </PanelGroup>
+          </Panel>
+          <VerticalResizeHandle />
+          {/* Right Side - ChatKit (full height) */}
+          <Panel minSize={20} defaultSize={30}>
+            <div className="flex h-full w-full p-1">
+              <PanelShell title="Assistant">
+                <div className="relative h-full w-full overflow-hidden rounded">
+                  <ChatKit control={control} className="h-full w-full" />
+                </div>
+              </PanelShell>
+            </div>
           </Panel>
         </PanelGroup>
       </div>
