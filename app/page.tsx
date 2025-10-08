@@ -330,10 +330,27 @@ export default function Home() {
                   <Panel minSize={30} defaultSize={67}>
                     <div className="flex h-full w-full p-1">
                       <PanelShell title="Graphic Panel">
-                        <PlaceholderPanel
-                          label="Graphic Panel"
-                          description="Add visualization here"
-                        />
+                        <div className="flex h-full w-full flex-col bg-white p-4">
+                          <div className="mb-3 text-center">
+                            <h2 className="text-base font-bold text-gray-900">
+                              NWSL Player Age Distribution vs. Goal-Scoring Age
+                            </h2>
+                            <p className="text-xs text-gray-600 mt-1 italic">
+                              Goals are scored by younger players on average (0.26 years younger)
+                            </p>
+                          </div>
+                          <div className="flex-1 flex items-center justify-center">
+                            <img
+                              src="/download.png"
+                              alt="Age Distribution Visualization"
+                              className="max-w-full max-h-full object-contain"
+                            />
+                          </div>
+                          <div className="mt-3 text-[11px] text-gray-600 space-y-1">
+                            <p><strong>Player Age:</strong> Mean = 26.46 years, SD = 4.27 years</p>
+                            <p><strong>Goal-Scoring Age:</strong> Mean = 26.20 years, SD = 4.54 years</p>
+                          </div>
+                        </div>
                       </PanelShell>
                     </div>
                   </Panel>

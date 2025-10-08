@@ -15,7 +15,8 @@ export async function POST() {
 
     const requestBody = {
       workflow: {
-        id: workflowId
+        id: workflowId,
+        version: "2"
       },
       user: 'nwsl-web-user-' + Date.now(),
     };
