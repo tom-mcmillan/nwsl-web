@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { DataGrid, GridColDef } from '@mui/x-data-grid';
 import { Box, Paper, Typography, Chip, Tabs, Tab } from '@mui/material';
 
@@ -27,7 +27,9 @@ export function DataPanel({
   const [activeTab, setActiveTab] = useState(0);
 
   // Use tabs if provided, otherwise use data
-  const currentData = tabs ? tabs[activeTab]?.data || [] : data || [];
+  const currentData = useMemo(() => {
+    return tabs ? tabs[activeTab]?.data || [] : data || [];
+  }, [tabs, activeTab, data]);
 
   useEffect(() => {
     // Validate data
@@ -37,7 +39,7 @@ export function DataPanel({
       setError(null);
     }
     setLoading(false);
-  }, [tabs, activeTab, data, currentData]);
+  }, [currentData]);
 
   // Generate columns from data keys
   const columns: GridColDef[] = currentData && currentData.length > 0

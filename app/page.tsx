@@ -56,7 +56,6 @@ const HorizontalResizeHandle = () => (
 
 export default function Home() {
   const [stats, setStats] = useState<Stats | null>(null);
-  const [panels, setPanels] = useState<PanelMap>({});
   const [loading, setLoading] = useState(true);
 
   // ChatKit setup with page context
@@ -171,7 +170,6 @@ export default function Home() {
   useEffect(() => {
     async function fetchData() {
       try {
-        setError(null);
         const [statsRes, panelEntries] = await Promise.all([
           fetch('/api/stats'),
           Promise.all(
@@ -193,7 +191,6 @@ export default function Home() {
 
         const statsData: Stats = await statsRes.json();
         setStats(statsData);
-        setPanels(Object.fromEntries(panelEntries));
       } catch (err) {
         console.error('Error fetching data:', err);
       } finally {
