@@ -122,6 +122,20 @@ table tr:hover {
   color: #424242;
 }
 
+.MuiDataGrid-cell.positive {
+  color: #00a651;
+  font-weight: 500;
+}
+
+.MuiDataGrid-cell.negative {
+  color: #d32f2f;
+  font-weight: 500;
+}
+
+.MuiDataGrid-cell.neutral {
+  color: #424242;
+}
+
 /* Scrollbar styling */
 ::-webkit-scrollbar {
   width: 12px;
