@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
-import { DataGrid, GridColDef } from '@mui/x-data-grid';
+import { DataGrid, GridColDef, GridToolbar } from '@mui/x-data-grid';
 import { Box, Paper, Typography, Chip, Tabs, Tab } from '@mui/material';
 
 interface TabData {
@@ -63,6 +63,25 @@ export function DataPanel({
           minWidth: 100,
           align: isNumeric ? 'right' : 'left',
           headerAlign: isNumeric ? 'right' : 'left',
+          
+          cellClassName: (params) => {
+            if (typeof params.value !== 'number') return '';
+            
+            if (col.includes('accuracy') || col.includes('per_90') || col.includes('rate')) {
+              return params.value >= 0.5 ? 'positive' : 'negative';
+            }
+            return '';
+          },
+          
+          valueFormatter: (value: unknown) => {
+            if (typeof value !== 'number') return value as string;
+            
+            if (col.includes('accuracy') || col.includes('per_90') || col.includes('rate')) {
+              return value.toFixed(2);
+            }
+            
+            return value.toLocaleString();
+          },
         };
       })
     : [];
@@ -137,7 +156,28 @@ export function DataPanel({
           loading={loading}
           density="compact"
           disableRowSelectionOnClick
-          hideFooter
+          
+          pagination
+          pageSizeOptions={[25, 50, 100]}
+          initialState={{
+            pagination: {
+              paginationModel: { pageSize: 50 },
+            },
+          }}
+          
+          slots={{
+            toolbar: GridToolbar,
+          }}
+          slotProps={{
+            toolbar: {
+              showQuickFilter: true,
+              csvOptions: {
+                fileName: 'nwsl-data-export',
+                delimiter: ',',
+              },
+            },
+          }}
+          
           sx={{
             border: 0,
             '& .MuiDataGrid-cell': { fontSize: '0.75rem' },
