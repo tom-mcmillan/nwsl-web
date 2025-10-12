@@ -1,5 +1,5 @@
 import 'server-only';
-import type { HealthResponse } from '@/lib/api';
+import type { HealthResponse, QueryRequest, QueryResponse } from '@/lib/api';
 
 export interface AdminPanelTab {
   id: string;
@@ -108,15 +108,18 @@ export async function executeSql(sql: string) {
   );
 }
 
-export async function executeQuery(query: string) {
-  return backendFetch<{
-    results: Array<Record<string, unknown>>;
-    row_count: number;
-  }>(
+export async function executeQuery(
+  query: string,
+  extras?: Omit<QueryRequest, 'query'>
+) {
+  return backendFetch<QueryResponse>(
     '/query',
     {
       method: 'POST',
-      body: JSON.stringify({ query }),
+      body: JSON.stringify({
+        query,
+        ...extras,
+      }),
     },
     'Query execution failed'
   );

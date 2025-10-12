@@ -88,23 +88,23 @@ export default function QueryPage() {
           <div className="space-y-6">
             {result.results.map((item, i) => (
               <div key={i} className="border-t border-gray-300 pt-4 first:border-t-0 first:pt-0">
-                {item.summary && (
+                {typeof item['summary'] === 'string' && (
                   <div className="mb-4">
                     <h3 className="font-medium mb-2">Summary</h3>
-                    <p className="text-sm">{item.summary}</p>
+                    <p className="text-sm">{item['summary']}</p>
                   </div>
                 )}
-                {item.analysis && (
+                {typeof item['analysis'] === 'string' && (
                   <div className="mb-4">
                     <h3 className="font-medium mb-2">Analysis</h3>
-                    <p className="text-sm">{item.analysis}</p>
+                    <p className="text-sm">{item['analysis']}</p>
                   </div>
                 )}
-                {item.data ? (
+                {item['data'] ? (
                   <div>
                     <h3 className="font-medium mb-2">Data</h3>
                     <pre className="bg-gray-50 p-4 text-xs overflow-x-auto border border-gray-300">
-                      {JSON.stringify(item.data, null, 2)}
+                      {JSON.stringify(item['data'], null, 2)}
                     </pre>
                   </div>
                 ) : null}
