@@ -1,8 +1,26 @@
 import 'server-only';
 import type { HealthResponse } from '@/lib/api';
 
+export interface AdminPanelTab {
+  id: string;
+  label: string;
+  description?: string | null;
+  sql: string;
+  position?: number;
+}
+
+export interface AdminPanelDefinition {
+  slug: string;
+  title: string;
+  description?: string | null;
+  max_rows: number;
+  tags?: string[];
+  tabs: AdminPanelTab[];
+}
+
 const API_BASE_URL = process.env.NWSL_API_BASE_URL ?? 'http://127.0.0.1:8080';
 const API_KEY = process.env.NWSL_API_KEY;
+const PANEL_ADMIN_TOKEN = process.env.NWSL_PANEL_ADMIN_TOKEN;
 
 if (!API_KEY) {
   throw new Error('NWSL_API_KEY is required on the server to reach the NWSL API.');
@@ -41,6 +59,15 @@ async function backendFetch<T>(
   }
 
   return response.json() as Promise<T>;
+}
+
+function withAdminHeaders(headers?: HeadersInit): HeadersInit {
+  if (!PANEL_ADMIN_TOKEN) {
+    throw new Error('NWSL_PANEL_ADMIN_TOKEN is required to manage panels.');
+  }
+  const merged = new Headers(headers);
+  merged.set('Authorization', `Bearer ${PANEL_ADMIN_TOKEN}`);
+  return merged;
 }
 
 export async function fetchPanel(slug: string, limit?: number) {
@@ -100,5 +127,61 @@ export async function fetchHealth() {
     '/health',
     { method: 'GET' },
     'Health endpoint failed'
+  );
+}
+
+export async function fetchAdminPanels() {
+  return backendFetch<{ panels: AdminPanelDefinition[] }>(
+    '/admin/panels',
+    { headers: withAdminHeaders() },
+    'Failed to load panel catalog'
+  );
+}
+
+export async function fetchAdminPanel(slug: string) {
+  return backendFetch<{ panel: AdminPanelDefinition }>(
+    `/admin/panels/${encodeURIComponent(slug)}`,
+    { headers: withAdminHeaders() },
+    `Failed to load panel ${slug}`
+  );
+}
+
+export async function saveAdminPanel(panel: AdminPanelDefinition) {
+  const method = panel?.slug ? 'PUT' : 'POST';
+  const path = panel?.slug
+    ? `/admin/panels/${encodeURIComponent(panel.slug)}`
+    : '/admin/panels';
+
+  return backendFetch<{ panel: AdminPanelDefinition }>(
+    path,
+    {
+      method,
+      headers: withAdminHeaders(),
+      body: JSON.stringify(panel),
+    },
+    `Failed to save panel ${panel.slug}`
+  );
+}
+
+export async function createAdminPanel(panel: AdminPanelDefinition) {
+  return backendFetch<{ panel: AdminPanelDefinition }>(
+    '/admin/panels',
+    {
+      method: 'POST',
+      headers: withAdminHeaders(),
+      body: JSON.stringify(panel),
+    },
+    `Failed to create panel ${panel.slug}`
+  );
+}
+
+export async function deleteAdminPanel(slug: string) {
+  await backendFetch<{ message: string }>(
+    `/admin/panels/${encodeURIComponent(slug)}`,
+    {
+      method: 'DELETE',
+      headers: withAdminHeaders(),
+    },
+    `Failed to delete panel ${slug}`
   );
 }

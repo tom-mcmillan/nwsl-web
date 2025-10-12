@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from "react";
+import { useSession } from 'next-auth/react'
 import { ChatKit, useChatKit } from '@openai/chatkit-react';
 import { Panel, PanelGroup, PanelResizeHandle } from 'react-resizable-panels';
 import { DataPanel } from '@/components/DataPanel';
@@ -18,32 +19,6 @@ interface Stats {
   shots: number;
 }
 
-interface DataRow {
-  [key: string]: unknown;
-}
-
-interface PanelPayload {
-  panel: {
-    slug: string;
-    title: string;
-    description?: string | null;
-    max_rows: number;
-    tags: string[];
-  };
-  results: DataRow[];
-  row_count: number;
-  columns: string[];
-  execution_time_ms: number;
-}
-
-type PanelMap = Record<string, PanelPayload>;
-
-const DASHBOARD_PANEL_SLUGS = [
-  'league-standings',
-  'top-scorers',
-  'team-performance',
-] as const;
-
 const VerticalResizeHandle = () => (
   <PanelResizeHandle className="group flex w-1 cursor-col-resize items-center justify-center bg-gray-200 transition-colors hover:bg-blue-500">
     <div className="h-8 w-0.5 rounded bg-gray-400 transition-colors group-hover:bg-white" />
@@ -57,6 +32,9 @@ const HorizontalResizeHandle = () => (
 );
 
 export default function Home() {
+  const { data: session } = useSession()
+  const isPro = session?.user?.tier === 'PRO'
+
   const [stats, setStats] = useState<Stats | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -203,38 +181,40 @@ export default function Home() {
   });
 
   useEffect(() => {
-    async function fetchData() {
-      try {
-        const [statsRes, panelEntries] = await Promise.all([
-          fetch('/api/stats'),
-          Promise.all(
-            DASHBOARD_PANEL_SLUGS.map(async (slug) => {
-              const response = await fetch(`/api/panel/${slug}`);
-              if (!response.ok) {
-                const errBody = await response.json().catch(() => ({}));
-                throw new Error(errBody?.error || `Failed to fetch panel: ${slug}`);
-              }
-              const payload: PanelPayload = await response.json();
-              return [slug, payload] as const;
-            })
-          ),
-        ]);
+    let cancelled = false
 
-        if (!statsRes.ok) {
-          throw new Error('Failed to fetch statistics');
+    async function fetchStats() {
+      if (!isPro) {
+        if (!cancelled) {
+          setLoading(false)
         }
+        return
+      }
 
-        const statsData: Stats = await statsRes.json();
-        setStats(statsData);
+      try {
+        const res = await fetch('/api/stats')
+        if (!res.ok) {
+          throw new Error('Failed to fetch statistics')
+        }
+        const statsData: Stats = await res.json()
+        if (!cancelled) {
+          setStats(statsData)
+        }
       } catch (err) {
-        console.error('Error fetching data:', err);
+        console.error('Error fetching statistics:', err)
       } finally {
-        setLoading(false);
+        if (!cancelled) {
+          setLoading(false)
+        }
       }
     }
 
-    fetchData();
-  }, []);
+    fetchStats()
+
+    return () => {
+      cancelled = true
+    }
+  }, [isPro])
 
   return (
     <div className="h-screen flex flex-col bg-gray-100">
@@ -270,6 +250,11 @@ export default function Home() {
 
       {/* Main Workspace */}
       <div className="flex-1 overflow-hidden p-2">
+        {!isPro ? (
+          <div className="mb-2 rounded border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800">
+            Premium data is locked. <a href="/auth" className="font-semibold underline">Log in or upgrade to NWSL Pro</a> to access live panels.
+          </div>
+        ) : null}
         <PanelGroup
           direction="horizontal"
           className="flex h-full"
