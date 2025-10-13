@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useMemo } from 'react';
 import { DataGrid, GridColDef, GridToolbar } from '@mui/x-data-grid';
-import { Box, Paper, Typography, Tabs, Tab } from '@mui/material';
+import { Box, Paper, Typography, Tabs, Tab, TextField, InputAdornment, IconButton } from '@mui/material';
 
 interface TabData {
   label: string;
@@ -32,6 +32,13 @@ export function DataPanel({
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState(0);
   const [query, setQuery] = useState('');
+  const [debounced, setDebounced] = useState('');
+
+  // Debounce the search input for smoother filtering on large tables
+  useEffect(() => {
+    const t = setTimeout(() => setDebounced(query.trim()), 150);
+    return () => clearTimeout(t);
+  }, [query]);
 
   const handleTabChange = (newTab: number) => {
     setActiveTab(newTab);
@@ -48,7 +55,7 @@ export function DataPanel({
   // Filtering logic for search
   const filteredData = useMemo(() => {
     const source = (currentData || []) as Record<string, unknown>[];
-    const q = query.trim().toLowerCase();
+    const q = debounced.toLowerCase();
     if (!q) return source;
     return source.filter((row) => {
       for (const v of Object.values(row)) {
@@ -58,7 +65,7 @@ export function DataPanel({
       }
       return false;
     });
-  }, [currentData, query]);
+  }, [currentData, debounced]);
 
   useEffect(() => {
     // Validate data
@@ -101,6 +108,21 @@ export function DataPanel({
           minWidth: 100,
           align: isNumeric ? 'right' : 'left',
           headerAlign: isNumeric ? 'right' : 'left',
+          renderCell: (params) => {
+            const value = params.value as unknown;
+            if (typeof value !== 'string' || !debounced) return params.formattedValue as string;
+            const lower = value.toLowerCase();
+            const idx = lower.indexOf(debounced.toLowerCase());
+            if (idx === -1) return value;
+            const end = idx + debounced.length;
+            return (
+              <span>
+                {value.slice(0, idx)}
+                <mark style={{ backgroundColor: '#ffff66', padding: '0 1px' }}>{value.slice(idx, end)}</mark>
+                {value.slice(end)}
+              </span>
+            );
+          },
           
           cellClassName: (params) => {
             if (typeof params.value !== 'number') return '';
@@ -157,12 +179,24 @@ export function DataPanel({
               {heading || title}
             </Typography>
             {searchable ? (
-              <input
-                type="text"
+              <TextField
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
-                placeholder="Search"
-                className="ml-auto px-2 py-1 text-xs border border-gray-300 rounded w-40"
+                onKeyDown={(e) => { if (e.key === 'Escape') setQuery(''); }}
+                size="small"
+                placeholder="Search rows"
+                sx={{ ml: 'auto', width: 220 }}
+                InputProps={{
+                  endAdornment: (
+                    <InputAdornment position="end">
+                      {query && (
+                        <IconButton aria-label="clear" size="small" onClick={() => setQuery('')}>
+                          ×
+                        </IconButton>
+                      )}
+                    </InputAdornment>
+                  ),
+                }}
               />
             ) : null}
           </Box>
