@@ -175,9 +175,6 @@ export function DataPanel({
           hideFooter
           rowHeight={28}
           columnHeaderHeight={28}
-          getRowClassName={(params) =>
-            params.indexRelativeToCurrentPage % 2 === 0 ? 'row--striped' : ''
-          }
           
           slots={{
             toolbar: GridToolbar,
@@ -200,16 +197,12 @@ export function DataPanel({
               fontSize: '12px',
               fontWeight: 700,
               backgroundColor: '#bdbdbd',
-              color: '#222222',
+              color: '#000000',
               borderBottom: '1px solid #d6d6d6',
             },
             '& .MuiDataGrid-columnHeaderTitle': { fontWeight: 700 },
-            '& .MuiDataGrid-row.row--striped': {
-              backgroundColor: '#f3f3f3',
-            },
-            '& .MuiDataGrid-row.row--striped:hover': {
-              backgroundColor: '#f0f0f0',
-            },
+            // Rows: all white, no alternating shading
+            '& .MuiDataGrid-row': { backgroundColor: '#ffffff' },
             '& .MuiDataGrid-row, & .MuiDataGrid-cell': {
               borderBottom: '1px solid #f3f3f3 !important',
             },
