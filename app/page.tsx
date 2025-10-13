@@ -6,9 +6,11 @@ import { ChatKit, useChatKit } from '@openai/chatkit-react';
 import { Panel, PanelGroup, PanelResizeHandle } from 'react-resizable-panels';
 import { DataPanel } from '@/components/DataPanel';
 import { ImagePanel } from '@/components/ImagePanel';
-import panel1Tab1Data from '@/public/data/panel-1.json';
+import { ResearchPanel } from '@/components/ResearchPanel';
 import panel1Tab2Data from '@/public/data/panel-1-tab-2.json';
 import panel1Tab3Data from '@/public/data/panel-1-tab-3.json';
+import panel2Data from '@/public/data/panel-2.json';
+import panel3Data from '@/public/data/panel-3.json';
 
 interface Stats {
   matches: number;
@@ -38,21 +40,20 @@ export default function Home() {
   const [stats, setStats] = useState<Stats | null>(null);
   const [loading, setLoading] = useState(true);
 
-  // Track active tabs for dynamic context
-  const [panel1ActiveTab, setPanel1ActiveTab] = useState(0);
+  // Track active tab only for the Graph image panel
   const [panel2ActiveTab, setPanel2ActiveTab] = useState(0);
-  const [panel3ActiveTab, setPanel3ActiveTab] = useState(0);
-
-  // Panel tab metadata
-  const panel1Tabs = [
-    { label: "Top Scorers 2025", data: panel1Tab1Data },
-    { label: "Top Assists 2025", data: panel1Tab2Data },
-    { label: "Top Keepers 2025", data: panel1Tab3Data }
-  ];
 
   const panel2Tabs = [
     { label: "Bell Curve", imagePath: "/images/bell-curve.png" },
     { label: "Eden Hazard Goal SPADL", imagePath: "/images/eden_hazard_goal_spadl.webp" }
+  ];
+
+  // Research links (hyperlinks list)
+  const researchLinks = [
+    { label: 'Natural Language Query: Compare two players', href: '/query' },
+    { label: 'SQL Explorer: Team passing accuracy by match', href: '/explore' },
+    { label: 'League standings methodology (panel)', href: '/api/panel/league-standings?limit=14' },
+    { label: 'Top scorers (panel)', href: '/api/panel/top-scorers?limit=10' },
   ];
 
   // ChatKit setup with page context
@@ -71,27 +72,18 @@ export default function Home() {
             shots: stats.shots
           } : null,
           activeData: {
-            panel1: {
-              name: 'Top Left Panel',
-              activeTab: panel1Tabs[panel1ActiveTab]?.label,
-              dataType: 'Player Statistics',
-              currentData: panel1Tabs[panel1ActiveTab]?.data,
-              availableTabs: panel1Tabs.map(t => t.label)
-            },
-            panel2: {
+            graph: {
               name: 'Top Right Panel',
               activeTab: panel2Tabs[panel2ActiveTab]?.label,
               dataType: 'Visualization',
               currentImage: panel2Tabs[panel2ActiveTab]?.imagePath,
               availableTabs: panel2Tabs.map(t => t.label)
             },
-            panel3: {
-              name: 'Bottom Panel',
-              activeTab: panel1Tabs[panel3ActiveTab]?.label,
-              dataType: 'Player Statistics',
-              currentData: panel1Tabs[panel3ActiveTab]?.data,
-              availableTabs: panel1Tabs.map(t => t.label)
-            }
+            research: {
+              name: 'Bottom Middle Research',
+              dataType: 'Research Links',
+              links: researchLinks,
+            },
           },
           userCanInteract: {
             switchTabs: true,
@@ -216,6 +208,30 @@ export default function Home() {
     }
   }, [isPro])
 
+  // Expand small seed datasets into large tables for preview
+  function makeLarge<T>(rows: readonly T[], target = 200): T[] {
+    const out: T[] = [];
+    if (!Array.isArray(rows) || rows.length === 0) return out;
+    while (out.length < target) {
+      // clone rows to avoid ref equality
+      for (const r of rows) {
+        out.push({ ...r });
+        if (out.length >= target) break;
+      }
+    }
+    return out.slice(0, target);
+  }
+
+  type TeamRow = { id?: number; team_name: string; wins?: number; losses?: number; draws?: number; goals_for?: number; goals_against?: number; points?: number };
+  type PlayerRow = { id?: number; player_name: string; team_name: string; assists_per_90?: number; key_passes?: number };
+  type MatchRow = { id?: number; match_date: string; home_team: string; away_team: string; home_score: number; away_score: number; attendance?: number };
+  type ShotsRow = { id?: number; player_name: string; team_name: string; clean_sheets?: number; saves_per_90?: number };
+
+  const teamRowsLarge: Record<string, unknown>[] = makeLarge<TeamRow>(panel2Data as TeamRow[], 250) as unknown as Record<string, unknown>[];
+  const playerRowsLarge: Record<string, unknown>[] = makeLarge<PlayerRow>(panel1Tab2Data as PlayerRow[], 300) as unknown as Record<string, unknown>[];
+  const matchRowsLarge: Record<string, unknown>[] = makeLarge<MatchRow>(panel3Data as MatchRow[], 250) as unknown as Record<string, unknown>[];
+  const shotsRowsLarge: Record<string, unknown>[] = makeLarge<ShotsRow>(panel1Tab3Data as ShotsRow[], 220) as unknown as Record<string, unknown>[];
+
   return (
     <div className="h-screen flex flex-col bg-gray-100">
       {/* Top Stats Bar */}
@@ -250,64 +266,61 @@ export default function Home() {
 
       {/* Main Workspace */}
       <div className="flex-1 overflow-hidden p-2">
-        {!isPro ? (
-          <div className="mb-2 rounded border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800">
-            Premium data is locked. <a href="/auth" className="font-semibold underline">Log in or upgrade to NWSL Pro</a> to access live panels.
-          </div>
-        ) : null}
+        {/* Gating banner removed by request */}
         <PanelGroup
           direction="horizontal"
           className="flex h-full"
           autoSaveId="nwsl-dashboard-layout"
         >
-          {/* Left Side - 4 Data Panels in 2 rows */}
-          <Panel minSize={50} defaultSize={70}>
-            <PanelGroup
-              direction="vertical"
-              className="flex h-full w-full"
-              autoSaveId="nwsl-left-stack"
-            >
-              {/* Top Row - 2 panels side by side */}
-              <Panel defaultSize={50} minSize={30}>
-                <PanelGroup
-                  direction="horizontal"
-                  className="flex h-full w-full"
-                  autoSaveId="nwsl-top-row"
-                >
-                  {/* Panel 1 - Left list with tabs */}
-                  <Panel minSize={20} defaultSize={33} className="m-2">
-                    <DataPanel
-                      tabs={panel1Tabs}
-                      height="100%"
-                      onTabChange={setPanel1ActiveTab}
-                    />
+          {/* Left/Middle: 3 columns (shared widths). Each column has adjustable heights */}
+          <Panel minSize={45} defaultSize={72}>
+            <PanelGroup direction="horizontal" className="flex h-full w-full" autoSaveId="nwsl-grid-cols">
+              {/* Column 1: Team (top) / Match (bottom) */}
+              <Panel minSize={15} defaultSize={33}>
+                <PanelGroup direction="vertical" className="flex h-full w-full" autoSaveId="nwsl-col-1">
+                  <Panel defaultSize={50} minSize={30}>
+                    <DataPanel heading="Team" data={teamRowsLarge} height="100%" />
                   </Panel>
-                  <VerticalResizeHandle />
-                  {/* Panel 2 - Center images with tabs */}
-                  <Panel minSize={30} defaultSize={67} className="m-2">
-                    <ImagePanel
-                      tabs={panel2Tabs}
-                      height="100%"
-                      onTabChange={setPanel2ActiveTab}
-                    />
+                  <HorizontalResizeHandle />
+                  <Panel defaultSize={50} minSize={30}>
+                    <DataPanel heading="Match" data={matchRowsLarge} height="100%" />
                   </Panel>
                 </PanelGroup>
               </Panel>
-              <HorizontalResizeHandle />
-              {/* Panel 3 - Bottom details with tabs */}
-              <Panel defaultSize={50} minSize={30} className="m-2">
-                <DataPanel
-                  tabs={panel1Tabs}
-                  height="100%"
-                  onTabChange={setPanel3ActiveTab}
-                />
+              <VerticalResizeHandle />
+              {/* Column 2: Graph (top) / Research (bottom) */}
+              <Panel minSize={15} defaultSize={34}>
+                <PanelGroup direction="vertical" className="flex h-full w-full" autoSaveId="nwsl-col-2">
+                  <Panel defaultSize={50} minSize={30}>
+                    <ImagePanel heading="Graph" tabs={panel2Tabs} height="100%" onTabChange={setPanel2ActiveTab} />
+                  </Panel>
+                  <HorizontalResizeHandle />
+                  <Panel defaultSize={50} minSize={30}>
+                    <ResearchPanel heading="Research" links={researchLinks} height="100%" />
+                  </Panel>
+                </PanelGroup>
+              </Panel>
+              <VerticalResizeHandle />
+              {/* Column 3: Player (top) / Shots (bottom) */}
+              <Panel minSize={15} defaultSize={33}>
+                <PanelGroup direction="vertical" className="flex h-full w-full" autoSaveId="nwsl-col-3">
+                  <Panel defaultSize={50} minSize={30}>
+                    <DataPanel heading="Player" data={playerRowsLarge} height="100%" />
+                  </Panel>
+                  <HorizontalResizeHandle />
+                  <Panel defaultSize={50} minSize={30}>
+                    <DataPanel heading="Shots" data={shotsRowsLarge} height="100%" />
+                  </Panel>
+                </PanelGroup>
               </Panel>
             </PanelGroup>
           </Panel>
           <VerticalResizeHandle />
-          {/* Right Side - ChatKit (full height) */}
-          <Panel minSize={20} defaultSize={30} className="m-2">
-            <ChatKit control={control} className="h-full w-full rounded-3xl overflow-hidden" />
+          {/* Right: ChatKit (full height, docked, edge-to-edge white) */}
+          <Panel minSize={18} defaultSize={28}>
+            <div className="h-full w-full bg-white">
+              <ChatKit control={control} className="h-full w-full" />
+            </div>
           </Panel>
         </PanelGroup>
       </div>
