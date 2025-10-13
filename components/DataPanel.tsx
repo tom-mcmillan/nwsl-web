@@ -15,6 +15,7 @@ interface DataPanelProps {
   data?: Record<string, unknown>[];
   tabs?: TabData[];
   height?: number | string;
+  searchable?: boolean;
   onTabChange?: (tabIndex: number) => void;
 }
 
@@ -24,11 +25,13 @@ export function DataPanel({
   data,
   tabs,
   height = 400,
+  searchable,
   onTabChange,
 }: DataPanelProps) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState(0);
+  const [query, setQuery] = useState('');
 
   const handleTabChange = (newTab: number) => {
     setActiveTab(newTab);
@@ -41,6 +44,21 @@ export function DataPanel({
   const currentData = useMemo(() => {
     return tabs ? tabs[activeTab]?.data || [] : data || [];
   }, [tabs, activeTab, data]);
+
+  // Filtering logic for search
+  const filteredData = useMemo(() => {
+    const source = (currentData || []) as Record<string, unknown>[];
+    const q = query.trim().toLowerCase();
+    if (!q) return source;
+    return source.filter((row) => {
+      for (const v of Object.values(row)) {
+        if (v === null || v === undefined) continue;
+        if (typeof v === 'string' && v.toLowerCase().includes(q)) return true;
+        if (typeof v === 'number' && String(v).includes(q)) return true;
+      }
+      return false;
+    });
+  }, [currentData, query]);
 
   useEffect(() => {
     // Validate data
@@ -107,7 +125,7 @@ export function DataPanel({
     : [];
 
   // Add row IDs
-  const rows = (currentData || []).map((row, index) => ({
+  const rows = (filteredData || []).map((row, index) => ({
     id: row.id || index,
     ...row,
   }));
@@ -134,10 +152,19 @@ export function DataPanel({
       {/* Heading above Tabs */}
       <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
         {(heading || title) && (
-          <Box sx={{ px: 1.5 }}>
+          <Box sx={{ px: 1.5, display: 'flex', alignItems: 'center', gap: 8 }}>
             <Typography component="h3" sx={{ fontSize: '0.85rem', fontWeight: 700, letterSpacing: 0.2, color: 'text.secondary', py: 0.75 }}>
               {heading || title}
             </Typography>
+            {searchable ? (
+              <input
+                type="text"
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                placeholder="Search"
+                className="ml-auto px-2 py-1 text-xs border border-gray-300 rounded w-40"
+              />
+            ) : null}
           </Box>
         )}
 
@@ -176,10 +203,8 @@ export function DataPanel({
           rowHeight={28}
           columnHeaderHeight={28}
           
-          slots={{
-            toolbar: GridToolbar,
-          }}
-          slotProps={{
+          slots={searchable ? undefined : { toolbar: GridToolbar }}
+          slotProps={searchable ? undefined : {
             toolbar: {
               showQuickFilter: true,
               csvOptions: {

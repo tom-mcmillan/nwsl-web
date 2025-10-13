@@ -279,11 +279,11 @@ export default function Home() {
               <Panel minSize={15} defaultSize={33}>
                 <PanelGroup direction="vertical" className="flex h-full w-full" autoSaveId="nwsl-col-1">
                   <Panel defaultSize={50} minSize={30}>
-                    <DataPanel heading="Team" data={teamRowsLarge} height="100%" />
+                    <DataPanel heading="Team" data={teamRowsLarge} height="100%" searchable />
                   </Panel>
                   <HorizontalResizeHandle />
                   <Panel defaultSize={50} minSize={30}>
-                    <DataPanel heading="Match" data={matchRowsLarge} height="100%" />
+                    <DataPanel heading="Match" data={matchRowsLarge} height="100%" searchable />
                   </Panel>
                 </PanelGroup>
               </Panel>
@@ -305,11 +305,11 @@ export default function Home() {
               <Panel minSize={15} defaultSize={33}>
                 <PanelGroup direction="vertical" className="flex h-full w-full" autoSaveId="nwsl-col-3">
                   <Panel defaultSize={50} minSize={30}>
-                    <DataPanel heading="Player" data={playerRowsLarge} height="100%" />
+                    <DataPanel heading="Player" data={playerRowsLarge} height="100%" searchable />
                   </Panel>
                   <HorizontalResizeHandle />
                   <Panel defaultSize={50} minSize={30}>
-                    <DataPanel heading="Shots" data={shotsRowsLarge} height="100%" />
+                    <DataPanel heading="Shots" data={shotsRowsLarge} height="100%" searchable />
                   </Panel>
                 </PanelGroup>
               </Panel>
