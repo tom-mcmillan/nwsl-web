@@ -5,6 +5,8 @@
   "scripts": {
     "dev": "next dev --turbopack",
     "build": "next build --turbopack",
+    "vercel-build": "DATABASE_URL=postgresql://placeholder prisma generate && next build --turbopack",
+    "postinstall": "prisma generate || true",
     "start": "next start",
     "lint": "eslint"
   },
