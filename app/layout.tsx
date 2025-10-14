@@ -18,6 +18,14 @@ export default async function RootLayout({
   const session = await getCurrentSession()
   const isPro = session?.user?.tier === 'PRO'
   const stats = await getWarehouseStats()
+  const statLineItems: Array<{ label: string; value: string }> = [
+    { label: 'Events', value: stats?.events ? stats.events.toLocaleString() : '—' },
+    { label: 'Passes', value: stats?.passes ? stats.passes.toLocaleString() : '—' },
+    { label: 'Shots', value: stats?.shots ? stats.shots.toLocaleString() : '—' },
+    { label: 'Players', value: stats?.players ? stats.players.toLocaleString() : '—' },
+    { label: 'Seasons', value: stats?.seasons ? stats.seasons.toLocaleString() : '—' },
+    { label: 'Matches', value: stats?.matches ? stats.matches.toLocaleString() : '—' },
+  ]
 
   return (
     <html lang="en">
@@ -29,9 +37,9 @@ export default async function RootLayout({
       </head>
       <body className="antialiased bg-white text-black">
         <nav className="bg-white border-b border-gray-300">
-          <div className="px-4 py-2">
+          <div className="px-3 py-1.5">
             <div className="flex items-center gap-6">
-              <Link href="/" className="text-black font-semibold text-sm">
+              <Link href="/" className="text-black font-semibold text-xl tracking-[0.18em] uppercase">
                 NWSL Data
                 {isPro ? (
                   <span className="text-[10px] bg-green-600 text-white px-1.5 py-0.5 rounded ml-1 align-middle font-bold">
@@ -39,46 +47,19 @@ export default async function RootLayout({
                   </span>
                 ) : null}
               </Link>
-              {stats ? (
-                <div className="ml-auto flex flex-wrap items-center gap-4 text-[11px] text-gray-600">
-                  <span className="flex items-center gap-1">
-                    <span className="uppercase tracking-wide text-gray-500">Events</span>
-                    <span className="font-semibold text-gray-900">
-                      {stats.events.toLocaleString()}
-                    </span>
+              <div className="ml-auto flex flex-wrap items-center gap-4 text-[11px] text-gray-700 uppercase tracking-wide">
+                {statLineItems.map(({ label, value }) => (
+                  <span key={label} className="flex items-center gap-1.5">
+                    <span className="text-gray-500">{label}</span>
+                    <span className="font-semibold text-gray-900">{value}</span>
                   </span>
-                  <span className="flex items-center gap-1">
-                    <span className="uppercase tracking-wide text-gray-500">Passes</span>
-                    <span className="font-semibold text-gray-900">
-                      {stats.passes.toLocaleString()}
-                    </span>
+                ))}
+                {!stats ? (
+                  <span className="text-[10px] font-semibold text-orange-600 tracking-widest">
+                    DATA OFFLINE
                   </span>
-                  <span className="flex items-center gap-1">
-                    <span className="uppercase tracking-wide text-gray-500">Shots</span>
-                    <span className="font-semibold text-gray-900">
-                      {stats.shots.toLocaleString()}
-                    </span>
-                  </span>
-                  <span className="flex items-center gap-1">
-                    <span className="uppercase tracking-wide text-gray-500">Matches</span>
-                    <span className="font-semibold text-gray-900">
-                      {stats.matches.toLocaleString()}
-                    </span>
-                  </span>
-                  <span className="flex items-center gap-1">
-                    <span className="uppercase tracking-wide text-gray-500">Players</span>
-                    <span className="font-semibold text-gray-900">
-                      {stats.players.toLocaleString()}
-                    </span>
-                  </span>
-                  <span className="flex items-center gap-1">
-                    <span className="uppercase tracking-wide text-gray-500">Seasons</span>
-                    <span className="font-semibold text-gray-900">
-                      {stats.seasons.toLocaleString()}
-                    </span>
-                  </span>
-                </div>
-              ) : null}
+                ) : null}
+              </div>
             </div>
           </div>
         </nav>

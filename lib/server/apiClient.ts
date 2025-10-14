@@ -132,6 +132,27 @@ export interface DashboardSummaryResponse {
   lastUpdated: string;
 }
 
+export interface DashboardTotalsResponse {
+  totals: {
+    events: number;
+    passes: number;
+    shots: number;
+    matches: number;
+    players: number;
+    seasons: number;
+  };
+  seasonYears: number[];
+  lastUpdated: string;
+}
+
+export async function fetchDashboardTotals() {
+  return backendFetch<DashboardTotalsResponse>(
+    '/dashboard/totals',
+    undefined,
+    'Failed to load dashboard totals'
+  );
+}
+
 export interface TeamOverviewResponse {
   seasonYear: number;
   competition: string;
