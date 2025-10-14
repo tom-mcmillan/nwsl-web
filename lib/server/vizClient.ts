@@ -8,11 +8,7 @@ export interface ShotMapEnvelope {
   imageUrl: string;
   summary: string;
   meta?: Record<string, unknown> | null;
-  metrics?: {
-    total_shots?: number;
-    goals?: number;
-    conversion_rate?: number;
-  };
+  metrics?: Record<string, number | undefined> | null;
 }
 
 async function vizFetch<T>(path: string, body: Record<string, unknown>): Promise<T> {
