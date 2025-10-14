@@ -51,7 +51,7 @@ export default async function RootLayout({
                 {statLineItems.map(({ label, value }) => (
                   <span key={label} className="flex items-center gap-1.5">
                     <span className="text-gray-500">{label}</span>
-                    <span className="font-semibold text-gray-900 text-sm">{value}</span>
+                    <span className="font-semibold text-gray-900 text-base">{value}</span>
                   </span>
                 ))}
                 {!stats ? (
