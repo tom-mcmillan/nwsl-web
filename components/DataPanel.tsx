@@ -24,7 +24,7 @@ export function DataPanel({
   heading,
   data,
   tabs,
-  height = 400,
+  height = 360,
   searchable,
   onTabChange,
 }: DataPanelProps) {
@@ -174,8 +174,8 @@ export function DataPanel({
       {/* Heading above Tabs */}
       <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
         {(heading || title) && (
-          <Box sx={{ px: 1.5, display: 'flex', alignItems: 'center', gap: 8 }}>
-            <Typography component="h3" sx={{ fontSize: '0.85rem', fontWeight: 700, letterSpacing: 0.2, color: 'text.secondary', py: 0.75 }}>
+          <Box sx={{ px: 1.25, display: 'flex', alignItems: 'center', gap: 4 }}>
+            <Typography component="h3" sx={{ fontSize: '0.8rem', fontWeight: 700, letterSpacing: 0.2, color: 'text.secondary', py: 0.5 }}>
               {heading || title}
             </Typography>
             {searchable ? (
@@ -185,7 +185,7 @@ export function DataPanel({
                 onKeyDown={(e) => { if (e.key === 'Escape') setQuery(''); }}
                 size="small"
                 placeholder="Search rows"
-                sx={{ ml: 'auto', width: 220 }}
+                sx={{ ml: 'auto', width: 180 }}
                 InputProps={{
                   endAdornment: (
                     <InputAdornment position="end">

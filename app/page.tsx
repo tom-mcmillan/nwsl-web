@@ -15,12 +15,11 @@ import {
   Select,
   SelectChangeEvent,
   Typography,
-  Divider,
+  Divider
 } from '@mui/material';
 
 import { DataPanel } from '@/components/DataPanel';
 import { ResearchPanel } from '@/components/ResearchPanel';
-import { useDashboardSummary } from '@/hooks/useDashboardSummary';
 import { useTeamOverview } from '@/hooks/useTeamOverview';
 import { useDashboardLookups } from '@/hooks/useDashboardLookups';
 import { usePlayerValuation } from '@/hooks/usePlayerValuation';
@@ -62,7 +61,7 @@ const HorizontalResizeHandle = () => (
 function PanelSection({ title, subtitle, children }: PanelSectionProps) {
   return (
     <Paper elevation={0} square sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
-      <Box sx={{ borderBottom: '1px solid', borderColor: 'divider', px: 2, py: 1.5 }}>
+      <Box sx={{ borderBottom: '1px solid', borderColor: 'divider', px: 1.75, py: 1.2 }}>
         <Typography variant="subtitle2" sx={{ fontWeight: 700, letterSpacing: 0.5, textTransform: 'uppercase' }}>
           {title}
         </Typography>
@@ -72,18 +71,30 @@ function PanelSection({ title, subtitle, children }: PanelSectionProps) {
           </Typography>
         ) : null}
       </Box>
-      <Box sx={{ flex: 1, overflow: 'auto', p: 2 }}>{children}</Box>
+      <Box sx={{ flex: 1, overflow: 'auto', p: 1.5 }}>{children}</Box>
     </Paper>
   );
 }
 
 function MetricCard({ label, value }: MetricCardProps) {
   return (
-    <Paper elevation={0} sx={{ px: 2, py: 1.5, border: '1px solid', borderColor: 'divider' }}>
-      <Typography variant="caption" color="text.secondary">
+    <Paper
+      elevation={0}
+      sx={{
+        px: 1.5,
+        py: 1,
+        border: '1px solid',
+        borderColor: 'divider',
+        backgroundColor: '#fdfdfd',
+      }}
+    >
+      <Typography
+        variant="caption"
+        sx={{ fontWeight: 600, textTransform: 'uppercase', letterSpacing: 0.8, color: 'text.secondary' }}
+      >
         {label}
       </Typography>
-      <Typography variant="h6" sx={{ fontWeight: 700 }}>
+      <Typography variant="subtitle1" sx={{ fontWeight: 700, fontSize: '1rem', lineHeight: 1.2 }}>
         {value}
       </Typography>
     </Paper>
@@ -92,7 +103,7 @@ function MetricCard({ label, value }: MetricCardProps) {
 
 function LoadingState() {
   return (
-    <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: 160 }}>
+    <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: 140 }}>
       <CircularProgress size={24} />
     </Box>
   );
@@ -120,7 +131,7 @@ export default function Home() {
   const { data: lookups } = useDashboardLookups();
 
   const [season, setSeason] = useState<number | undefined>();
-  const [competition, setCompetition] = useState<CompetitionOption>('regular_season');
+  const competition: CompetitionOption = 'regular_season';
   const [teamId, setTeamId] = useState<string | null>(null);
   const [matchId, setMatchId] = useState<string | undefined>();
   const [selectedPlayerId, setSelectedPlayerId] = useState<string | undefined>();
@@ -143,7 +154,6 @@ export default function Home() {
     return undefined;
   }, [season, lookups]);
 
-  const { data: summaryData, isLoading: summaryLoading } = useDashboardSummary(currentSeason);
   const { data: teamOverviewData, isLoading: teamOverviewLoading } = useTeamOverview({ season: currentSeason, competition });
   const {
     data: playerValuationData,
@@ -157,7 +167,7 @@ export default function Home() {
     }
     const firstRow = teamOverviewData?.teamTable.rows?.[0];
     return Array.isArray(firstRow) && typeof firstRow[0] === 'string' ? firstRow[0] : undefined;
-  }, [teamId, lookups, teamOverviewData]);
+  }, [teamId, lookups, teamOverviewData?.teamTable]);
   const { data: shotMapData, isLoading: shotMapLoading } = useShotMap({ teamName: shotMapTeamName, season: currentSeason });
 
   useEffect(() => {
@@ -172,16 +182,17 @@ export default function Home() {
   }, [playerValuationData, selectedPlayerId]);
 
   const teamTableRows = useMemo(() => {
-    if (!teamOverviewData) return [];
-    const columns = teamOverviewData.teamTable.columns;
-    return teamOverviewData.teamTable.rows.map((row, index) => {
+    const table = teamOverviewData?.teamTable;
+    if (!table) return [];
+    const columns = table.columns;
+    return table.rows.map((row, index) => {
       const entry: Record<string, unknown> = { id: `${row[0]}-${index}` };
       columns.forEach((col, idx) => {
         entry[col] = row[idx];
       });
       return entry;
     });
-  }, [teamOverviewData]);
+  }, [teamOverviewData?.teamTable]);
 
   const playerValuationRows = useMemo(() => {
     if (!playerValuationData) return [];
@@ -213,15 +224,6 @@ export default function Home() {
     }));
   }, [momentumData]);
 
-  const summaryCards = useMemo(() => {
-    const headline = summaryData?.headline;
-    return [
-      { label: 'Matches', value: formatNumber(headline?.matches) },
-      { label: 'Players', value: formatNumber(headline?.players) },
-      { label: 'Teams', value: formatNumber(headline?.teams) },
-      { label: 'Events', value: formatNumber(headline?.events) },
-    ];
-  }, [summaryData]);
 
   const leagueAverageCards = useMemo(() => {
     const averages = teamOverviewData?.leagueAverages;
@@ -232,7 +234,7 @@ export default function Home() {
       { label: 'Pass Accuracy %', value: formatNumber(averages.passAccuracyPct, { maximumFractionDigits: 1 }) },
       { label: 'Home Win %', value: formatNumber(averages.homeWinPct, { maximumFractionDigits: 1 }) },
     ];
-  }, [teamOverviewData]);
+  }, [teamOverviewData?.leagueAverages]);
 
   const shotMapMetricCards = useMemo(() => {
     if (!shotMapData?.metrics) return [];
@@ -262,12 +264,12 @@ export default function Home() {
       competition,
       teamId,
     },
-    summary: summaryData?.headline ?? null,
+    summary: null,
     highlights: {
       topTeam: teamOverviewData?.teamTable.rows?.[0]?.[0] ?? null,
       topPlayer: playerValuationData?.players?.[0]?.playerName ?? null,
     },
-  }), [season, competition, teamId, summaryData, teamOverviewData, playerValuationData]);
+  }), [season, competition, teamId, teamOverviewData?.teamTable, playerValuationData?.players]);
 
   const researchLinks = [
     { label: 'Natural Language Query: Compare two players', href: '/query' },
@@ -364,23 +366,9 @@ export default function Home() {
     },
   });
 
-  const handleSeasonChange = (event: SelectChangeEvent<string>) => {
-    const value = event.target.value;
-    setSeason(value ? Number(value) : undefined);
-  };
-
-  const handleCompetitionChange = (event: SelectChangeEvent<CompetitionOption>) => {
-    setCompetition(event.target.value as CompetitionOption);
-  };
-
   const handleTeamChange = (event: SelectChangeEvent<string>) => {
     const value = event.target.value;
     setTeamId(value === 'all' ? null : value);
-  };
-
-  const handleMatchChange = (event: SelectChangeEvent<string>) => {
-    const value = event.target.value;
-    setMatchId(value || undefined);
   };
 
   const handlePlayerChange = (event: SelectChangeEvent<string>) => {
@@ -388,334 +376,277 @@ export default function Home() {
     setSelectedPlayerId(value || undefined);
   };
 
+  const analyticsPanels = (
+    <>
+      <Panel minSize={45} defaultSize={70}>
+        <PanelGroup direction="vertical" className="flex h-full w-full" autoSaveId="nwsl-dashboard-left">
+          <Panel defaultSize={60} minSize={35}>
+            <PanelSection title="Team Overview" subtitle={`${competitionLabel}${season ? ` • ${season}` : ''}`}>
+              <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1.5, alignItems: 'center', mb: 1.5 }}>
+                <FormControl size="small" sx={{ minWidth: 160 }}>
+                  <InputLabel id="team-select-label">Team</InputLabel>
+                  <Select
+                    labelId="team-select-label"
+                    value={teamId ?? 'all'}
+                    label="Team"
+                    onChange={handleTeamChange}
+                  >
+                    <MenuItem value="all">All Teams</MenuItem>
+                    {(lookups?.teams ?? []).map((team) => (
+                      <MenuItem value={team.teamId} key={team.teamId}>
+                        {team.teamName}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+              </Box>
+              {teamOverviewLoading ? (
+                <LoadingState />
+              ) : teamTableRows.length ? (
+                <>
+                  <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: 1.5, mb: 1.5 }}>
+                    {leagueAverageCards.map((metric) => (
+                      <MetricCard key={metric.label} label={metric.label} value={metric.value} />
+                    ))}
+                  </Box>
+                  {shotMapTeamName ? (
+                    <Box sx={{ display: 'flex', gap: 1.5, flexWrap: 'wrap', mb: 1.5 }}>
+                      <Paper
+                        variant="outlined"
+                        sx={{ flex: 1, minWidth: 260, position: 'relative', minHeight: 220, overflow: 'hidden' }}
+                      >
+                        {shotMapLoading ? (
+                          <LoadingState />
+                        ) : shotMapData ? (
+                          <Image
+                            src={shotMapData.imageUrl}
+                            alt={`${shotMapTeamName} shot map`}
+                            fill
+                            style={{ objectFit: 'cover' }}
+                            sizes="(max-width: 768px) 100vw, 33vw"
+                          />
+                        ) : (
+                          <EmptyState message="Unable to load shot map." />
+                        )}
+                      </Paper>
+                      <Box sx={{ flex: 1, minWidth: 220, display: 'flex', flexDirection: 'column', gap: 1.5 }}>
+                        {shotMapMetricCards.length ? (
+                          <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: 1 }}>
+                            {shotMapMetricCards.map((metric) => (
+                              <MetricCard key={metric.label} label={metric.label} value={metric.value} />
+                            ))}
+                          </Box>
+                        ) : null}
+                        <Typography variant="body2" color="text.secondary">
+                          Live shot map for {shotMapTeamName}. Metrics update with filters and can be refreshed on demand.
+                        </Typography>
+                      </Box>
+                    </Box>
+                  ) : null}
+                  <DataPanel heading="League Table" data={teamTableRows} height="100%" searchable />
+                </>
+              ) : (
+                <EmptyState message="No team overview data available for the selected filters." />
+              )}
+            </PanelSection>
+          </Panel>
+          <HorizontalResizeHandle />
+          <Panel defaultSize={40} minSize={35}>
+            <PanelSection title="Momentum & Match Flow" subtitle={momentumData?.match ? `${momentumData.match.homeTeam} vs ${momentumData.match.awayTeam}` : undefined}>
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
+                <Typography variant="subtitle2" color="text.secondary">
+                  Rolling xG window: 5 minutes
+                </Typography>
+                <Typography variant="caption" color="text.secondary">
+                  {momentumData?.match ? `${formatNumber(momentumData.match.homeScore)} - ${formatNumber(momentumData.match.awayScore)}` : ''}
+                </Typography>
+              </Box>
+              {momentumLoading ? (
+                <LoadingState />
+              ) : momentumEventRows.length ? (
+                <DataPanel heading="Key Events" data={momentumEventRows} height="100%" searchable />
+              ) : (
+                <EmptyState message="No event data available for the selected match." />
+              )}
+            </PanelSection>
+          </Panel>
+        </PanelGroup>
+      </Panel>
+      <VerticalResizeHandle />
+      <Panel minSize={25} defaultSize={40}>
+        <PanelGroup direction="vertical" className="flex h-full w-full" autoSaveId="nwsl-dashboard-middle">
+          <Panel defaultSize={60} minSize={35}>
+            <PanelSection title="Player Valuation & Advanced Metrics" subtitle={teamId ? `Filtered: ${lookups?.teams.find((team) => team.teamId === teamId)?.teamName ?? teamId}` : 'All Teams'}>
+              {playerValuationLoading ? (
+                <LoadingState />
+              ) : playerValuationRows.length ? (
+                <>
+                  <Box sx={{ display: 'flex', gap: 1.5, mb: 1.5, flexWrap: 'wrap' }}>
+                    <MetricCard
+                      label="Top xG"
+                      value={playerValuationData?.headline.topXg?.playerName
+                        ? `${playerValuationData.headline.topXg.playerName} • ${formatNumber(playerValuationData.headline.topXg.value, { maximumFractionDigits: 2 })}`
+                        : '—'}
+                    />
+                    <MetricCard
+                      label="Top xT"
+                      value={playerValuationData?.headline.topXt?.playerName
+                        ? `${playerValuationData.headline.topXt.playerName} • ${formatNumber(playerValuationData.headline.topXt.value, { maximumFractionDigits: 2 })}`
+                        : '—'}
+                    />
+                    <MetricCard
+                      label="Median VAEP"
+                      value={formatNumber(playerValuationData?.headline.medianVaep, { maximumFractionDigits: 2 })}
+                    />
+                  </Box>
+                  <DataPanel heading="Players" data={playerValuationRows} height="100%" searchable />
+                </>
+              ) : (
+                <EmptyState message="No player valuation data available for the selected filters." />
+              )}
+            </PanelSection>
+          </Panel>
+          <HorizontalResizeHandle />
+          <Panel defaultSize={40} minSize={35}>
+            <PanelSection title="Research & Links">
+              <ResearchPanel heading="Research" links={researchLinks} height="100%" />
+            </PanelSection>
+          </Panel>
+        </PanelGroup>
+      </Panel>
+      <VerticalResizeHandle />
+      <Panel minSize={25} defaultSize={35}>
+        <PanelGroup direction="vertical" className="flex h-full w-full" autoSaveId="nwsl-dashboard-right">
+          <Panel defaultSize={45} minSize={35}>
+            <PanelSection title="Player Style & Role">
+              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
+                <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1.5, alignItems: 'center' }}>
+                  <FormControl size="small" sx={{ minWidth: 180 }}>
+                    <InputLabel id="player-select-label">Player</InputLabel>
+                    <Select
+                      labelId="player-select-label"
+                      value={selectedPlayerId ?? ''}
+                      label="Player"
+                      onChange={handlePlayerChange}
+                      disabled={!playerValuationData?.players?.length}
+                    >
+                      {(playerValuationData?.players ?? []).map((player) => (
+                        <MenuItem value={player.playerId} key={player.playerId}>
+                          {player.playerName}
+                        </MenuItem>
+                      ))}
+                    </Select>
+                  </FormControl>
+                </Box>
+                <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1.5 }}>
+                  <Paper variant="outlined" sx={{ flex: 1, minWidth: 260, position: 'relative', minHeight: 240 }}>
+                    <Image
+                      src="/images/player-style.png"
+                      alt={selectedPlayerId ? `Player style report` : 'Player style overview'}
+                      fill
+                      style={{ objectFit: 'cover' }}
+                      sizes="(max-width: 768px) 100vw, 33vw"
+                    />
+                  </Paper>
+                  <Box sx={{ flex: 1, minWidth: 220, display: 'flex', flexDirection: 'column', gap: 1.25 }}>
+                    {playerStyleLoading ? (
+                      <LoadingState />
+                    ) : playerStyleData ? (
+                      <>
+                        <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
+                          Style Breakdown
+                        </Typography>
+                        <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))', gap: 1 }}>
+                          {playerStyleData.radar.metrics.map((metric) => (
+                            <MetricCard
+                              key={metric.label}
+                              label={metric.label}
+                              value={`${formatNumber(metric.value, { maximumFractionDigits: 2 })} • ${formatNumber(metric.percentile, { maximumFractionDigits: 1 })} pct.`}
+                            />
+                          ))}
+                        </Box>
+                        <Divider />
+                        <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
+                          Top Tendencies
+                        </Typography>
+                        {playerStyleData.stylePrototypes.length ? (
+                          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+                            {playerStyleData.stylePrototypes.map((prototype) => (
+                              <Paper key={prototype.prototypeId} variant="outlined" sx={{ p: 1.25 }}>
+                                <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                                  {prototype.actionType} • Prototype {prototype.prototypeId}
+                                </Typography>
+                                <Typography variant="caption" color="text.secondary">
+                                  Share {formatNumber(prototype.share * 100, { maximumFractionDigits: 1 })}% • Weight {formatNumber(prototype.weight, { maximumFractionDigits: 2 })}
+                                </Typography>
+                              </Paper>
+                            ))}
+                          </Box>
+                        ) : (
+                          <Typography variant="caption" color="text.secondary">
+                            No style components available.
+                          </Typography>
+                        )}
+                      </>
+                    ) : (
+                      <EmptyState message="Select a player to view style metrics." />
+                    )}
+                  </Box>
+                </Box>
+              </Box>
+            </PanelSection>
+          </Panel>
+          <HorizontalResizeHandle />
+          <Panel defaultSize={55} minSize={35}>
+            <PanelSection title="Value Flow Spotlight">
+              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+                <Typography variant="body2" color="text.secondary">
+                  Coming soon: Sankey visuals for team-to-player VAEP contributions.
+                </Typography>
+                <Divider />
+                <Typography variant="caption" color="text.secondary">
+                  Request this data via ChatKit for the latest exports.
+                </Typography>
+              </Box>
+            </PanelSection>
+          </Panel>
+        </PanelGroup>
+      </Panel>
+    </>
+  );
+
+  const chatPanelContent = (
+    <Box
+      sx={{
+        height: '100%',
+        width: '100%',
+        backgroundColor: '#ffffff',
+        borderLeft: '1px solid #d1d5db',
+      }}
+    >
+      {isPro ? (
+        <ChatKit control={control} className="h-full w-full" />
+      ) : (
+        <Box sx={{ p: 3 }}>
+          <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 1 }}>
+            Chat Assistant
+          </Typography>
+          <Typography variant="body2" color="text.secondary">
+            NWSL Pro access unlocks the ChatKit assistant for deeper analysis.
+          </Typography>
+        </Box>
+      )}
+    </Box>
+  );
+
   return (
     <div className="h-screen flex flex-col bg-gray-100">
-      <div className="bg-white border-b border-gray-300">
-        <div className="flex flex-wrap items-end gap-4 px-4 py-3">
-          <FormControl size="small" sx={{ minWidth: 140 }}>
-            <InputLabel id="season-select-label">Season</InputLabel>
-            <Select
-              labelId="season-select-label"
-              value={season?.toString() ?? ''}
-              label="Season"
-              onChange={handleSeasonChange}
-            >
-              {(lookups?.seasons ?? []).map((year) => (
-                <MenuItem value={year.toString()} key={year}>
-                  {year}
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
-          <FormControl size="small" sx={{ minWidth: 180 }}>
-            <InputLabel id="competition-select-label">Competition</InputLabel>
-            <Select
-              labelId="competition-select-label"
-              value={competition}
-              label="Competition"
-              onChange={handleCompetitionChange}
-            >
-              {competitionOptions.map((option) => (
-                <MenuItem value={option.value} key={option.value}>
-                  {option.label}
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
-          <FormControl size="small" sx={{ minWidth: 200 }}>
-            <InputLabel id="match-select-label">Match</InputLabel>
-            <Select
-              labelId="match-select-label"
-              value={matchId ?? ''}
-              label="Match"
-              onChange={handleMatchChange}
-            >
-              {(lookups?.matches ?? []).map((match) => (
-                <MenuItem value={match.matchId} key={match.matchId}>
-                  {match.label}
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
-        </div>
-      </div>
-
-      <div className="bg-white border-b border-gray-300">
-        <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: 2, px: 4, py: 2 }}>
-          {summaryLoading ? <LoadingState /> : summaryCards.map((metric) => (
-            <MetricCard key={metric.label} label={metric.label} value={metric.value} />
-          ))}
-        </Box>
-      </div>
-
       <div className="flex-1 overflow-hidden p-2">
-        <PanelGroup direction="horizontal" className="flex h-full" autoSaveId="nwsl-dashboard-layout">
-          <Panel minSize={45} defaultSize={70}>
-            <PanelGroup direction="vertical" className="flex h-full w-full" autoSaveId="nwsl-dashboard-left">
-              <Panel defaultSize={60} minSize={35}>
-                <PanelSection title="Team Overview" subtitle={`${competitionLabel}${season ? ` • ${season}` : ''}`}>
-                  <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2, alignItems: 'center', mb: 2 }}>
-                    <FormControl size="small" sx={{ minWidth: 180 }}>
-                      <InputLabel id="team-select-label">Team</InputLabel>
-                      <Select
-                        labelId="team-select-label"
-                        value={teamId ?? 'all'}
-                        label="Team"
-                        onChange={handleTeamChange}
-                      >
-                        <MenuItem value="all">All Teams</MenuItem>
-                        {(lookups?.teams ?? []).map((team) => (
-                          <MenuItem value={team.teamId} key={team.teamId}>
-                            {team.teamName}
-                          </MenuItem>
-                        ))}
-                      </Select>
-                    </FormControl>
-                  </Box>
-                  {teamOverviewLoading ? (
-                    <LoadingState />
-                  ) : teamTableRows.length ? (
-                    <>
-                      <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: 2, mb: 2 }}>
-                        {leagueAverageCards.map((metric) => (
-                          <MetricCard key={metric.label} label={metric.label} value={metric.value} />
-                        ))}
-                      </Box>
-                      {shotMapTeamName ? (
-                        <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap', mb: 2 }}>
-                          <Paper
-                            variant="outlined"
-                            sx={{ flex: 1, minWidth: 320, position: 'relative', minHeight: 260, overflow: 'hidden' }}
-                          >
-                            {shotMapLoading ? (
-                              <LoadingState />
-                            ) : shotMapData ? (
-                              <Image
-                                src={shotMapData.imageUrl}
-                                alt={shotMapData.summary || `${shotMapTeamName} shot map`}
-                                fill
-                                style={{ objectFit: 'contain' }}
-                                sizes="(max-width: 768px) 100vw, 33vw"
-                              />
-                            ) : (
-                              <EmptyState message="Shot map unavailable." />
-                            )}
-                          </Paper>
-                          {shotMapMetricCards.length ? (
-                            <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: 1, minWidth: 160 }}>
-                              {shotMapMetricCards.map((metric) => (
-                                <MetricCard key={metric.label} label={metric.label} value={metric.value} />
-                              ))}
-                            </Box>
-                          ) : null}
-                        </Box>
-                      ) : null}
-                      <DataPanel heading="Team" data={teamTableRows} height="100%" searchable />
-                    </>
-                  ) : (
-                    <EmptyState message="No team data available for the selected filters." />
-                  )}
-                </PanelSection>
-              </Panel>
-              <HorizontalResizeHandle />
-              <Panel defaultSize={35} minSize={30}>
-                <PanelSection title="Team Tactical Analysis" subtitle={shotMapTeamName ? `${shotMapTeamName} • ${competitionLabel}` : competitionLabel}>
-                  <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2 }}>
-                    <Paper
-                      variant="outlined"
-                      sx={{ flex: 1, minWidth: 320, position: 'relative', minHeight: 320, overflow: 'hidden' }}
-                    >
-                      <Image
-                        src="/images/team-tactical-analysis.png"
-                        alt={shotMapTeamName ? `${shotMapTeamName} tactical analysis` : 'Team tactical analysis overview'}
-                        fill
-                        style={{ objectFit: 'cover' }}
-                        sizes="(max-width: 768px) 100vw, 33vw"
-                      />
-                    </Paper>
-                    <Box sx={{ flex: 1, minWidth: 260, display: 'flex', flexDirection: 'column', gap: 1.5 }}>
-                      <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
-                        Pressing & Possession Highlights
-                      </Typography>
-                      <Typography variant="body2" color="text.secondary">
-                        Heat map focuses on high press recoveries and wide overloads, while the trend chart tracks
-                        possession swings across 15-minute windows. Use the filters above to swap teams or seasons.
-                      </Typography>
-                      <Divider />
-                      <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: 1 }}>
-                        <MetricCard label="High Press Regains" value="+8% vs league" />
-                        <MetricCard label="Final-Third Entries" value="18 / match" />
-                        <MetricCard label="Average Possession" value="56%" />
-                        <MetricCard label="Switches of Play" value="12 / match" />
-                      </Box>
-                    </Box>
-                  </Box>
-                </PanelSection>
-              </Panel>
-              <HorizontalResizeHandle />
-              <Panel defaultSize={40} minSize={35}>
-                <PanelSection title="Match Momentum" subtitle={momentumData?.match ? `${momentumData.match.homeTeam} vs ${momentumData.match.awayTeam}` : undefined}>
-                  <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-                    <Typography variant="subtitle2" color="text.secondary">
-                      Rolling xG window: 5 minutes
-                    </Typography>
-                    <Typography variant="caption" color="text.secondary">
-                      {momentumData?.match ? `${formatNumber(momentumData.match.homeScore)} - ${formatNumber(momentumData.match.awayScore)}` : ''}
-                    </Typography>
-                  </Box>
-                  {momentumLoading ? (
-                    <LoadingState />
-                  ) : momentumEventRows.length ? (
-                    <DataPanel heading="Key Events" data={momentumEventRows} height="100%" searchable />
-                  ) : (
-                    <EmptyState message="No event data available for the selected match." />
-                  )}
-                </PanelSection>
-              </Panel>
-            </PanelGroup>
-          </Panel>
-          <VerticalResizeHandle />
-          <Panel minSize={25} defaultSize={40}>
-            <PanelGroup direction="vertical" className="flex h-full w-full" autoSaveId="nwsl-dashboard-middle">
-              <Panel defaultSize={60} minSize={35}>
-                <PanelSection title="Player Valuation & Advanced Metrics" subtitle={teamId ? `Filtered: ${lookups?.teams.find((team) => team.teamId === teamId)?.teamName ?? teamId}` : 'All Teams'}>
-                  {playerValuationLoading ? (
-                    <LoadingState />
-                  ) : playerValuationRows.length ? (
-                    <>
-                      <Box sx={{ display: 'flex', gap: 2, mb: 2, flexWrap: 'wrap' }}>
-                        <MetricCard
-                          label="Top xG"
-                          value={playerValuationData?.headline.topXg?.playerName
-                            ? `${playerValuationData.headline.topXg.playerName} • ${formatNumber(playerValuationData.headline.topXg.value, { maximumFractionDigits: 2 })}`
-                            : '—'}
-                        />
-                        <MetricCard
-                          label="Top xT"
-                          value={playerValuationData?.headline.topXt?.playerName
-                            ? `${playerValuationData.headline.topXt.playerName} • ${formatNumber(playerValuationData.headline.topXt.value, { maximumFractionDigits: 2 })}`
-                            : '—'}
-                        />
-                        <MetricCard
-                          label="Median VAEP"
-                          value={formatNumber(playerValuationData?.headline.medianVaep, { maximumFractionDigits: 2 })}
-                        />
-                      </Box>
-                      <DataPanel heading="Players" data={playerValuationRows} height="100%" searchable />
-                    </>
-                  ) : (
-                    <EmptyState message="No player valuation data available for the selected filters." />
-                  )}
-                </PanelSection>
-              </Panel>
-              <HorizontalResizeHandle />
-              <Panel defaultSize={40} minSize={35}>
-                <PanelSection title="Research & Links">
-                  <ResearchPanel heading="Research" links={researchLinks} height="100%" />
-                </PanelSection>
-              </Panel>
-            </PanelGroup>
-          </Panel>
-          <VerticalResizeHandle />
-          <Panel minSize={25} defaultSize={35}>
-            <PanelGroup direction="vertical" className="flex h-full w-full" autoSaveId="nwsl-dashboard-right">
-              <Panel defaultSize={45} minSize={35}>
-                <PanelSection title="Player Style & Role">
-                  <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2, alignItems: 'center' }}>
-                      <FormControl size="small" sx={{ minWidth: 200 }}>
-                        <InputLabel id="player-select-label">Player</InputLabel>
-                        <Select
-                          labelId="player-select-label"
-                          value={selectedPlayerId ?? ''}
-                          label="Player"
-                          onChange={handlePlayerChange}
-                          disabled={!playerValuationData?.players?.length}
-                        >
-                          {(playerValuationData?.players ?? []).map((player) => (
-                            <MenuItem value={player.playerId} key={player.playerId}>
-                              {player.playerName}
-                            </MenuItem>
-                          ))}
-                        </Select>
-                      </FormControl>
-                    </Box>
-                    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2 }}>
-                      <Paper variant="outlined" sx={{ flex: 1, minWidth: 320, position: 'relative', minHeight: 320 }}>
-                        <Image
-                          src="/images/player-style.png"
-                          alt={selectedPlayerId ? `Player style report` : 'Player style overview'}
-                          fill
-                          style={{ objectFit: 'cover' }}
-                          sizes="(max-width: 768px) 100vw, 33vw"
-                        />
-                      </Paper>
-                      <Box sx={{ flex: 1, minWidth: 260, display: 'flex', flexDirection: 'column', gap: 1.5 }}>
-                        {playerStyleLoading ? (
-                          <LoadingState />
-                        ) : playerStyleData ? (
-                          <>
-                            <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
-                              Style Breakdown
-                            </Typography>
-                            <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: 1 }}>
-                              {playerStyleData.radar.metrics.map((metric) => (
-                                <MetricCard
-                                  key={metric.label}
-                                  label={metric.label}
-                                  value={`${formatNumber(metric.value, { maximumFractionDigits: 2 })} • ${formatNumber(metric.percentile, { maximumFractionDigits: 1 })} pct.`}
-                                />
-                              ))}
-                            </Box>
-                            <Divider />
-                            <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
-                              Top Tendencies
-                            </Typography>
-                            {playerStyleData.stylePrototypes.length ? (
-                              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-                                {playerStyleData.stylePrototypes.map((prototype) => (
-                                  <Paper key={prototype.prototypeId} variant="outlined" sx={{ p: 1.5 }}>
-                                    <Typography variant="body2" sx={{ fontWeight: 600 }}>
-                                      {prototype.actionType} • Prototype {prototype.prototypeId}
-                                    </Typography>
-                                    <Typography variant="caption" color="text.secondary">
-                                      Share {formatNumber(prototype.share * 100, { maximumFractionDigits: 1 })}% • Weight {formatNumber(prototype.weight, { maximumFractionDigits: 2 })}
-                                    </Typography>
-                                  </Paper>
-                                ))}
-                              </Box>
-                            ) : (
-                              <Typography variant="caption" color="text.secondary">
-                                No style components available.
-                              </Typography>
-                            )}
-                          </>
-                        ) : (
-                          <EmptyState message="Select a player to view style metrics." />
-                        )}
-                      </Box>
-                    </Box>
-                  </Box>
-                </PanelSection>
-              </Panel>
-            </PanelGroup>
-          </Panel>
+        <PanelGroup direction="horizontal" className="flex h-full" autoSaveId="nwsl-dashboard-root-right">
+          {analyticsPanels}
           <VerticalResizeHandle />
           <Panel minSize={18} defaultSize={28}>
-            <div className="h-full w-full bg-white">
-              {isPro ? (
-                <ChatKit control={control} className="h-full w-full" />
-              ) : (
-                <Box sx={{ p: 3 }}>
-                  <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 1 }}>
-                    Chat Assistant
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary">
-                    NWSL Pro access unlocks the ChatKit assistant for deeper analysis.
-                  </Typography>
-                </Box>
-              )}
-            </div>
+            {chatPanelContent}
           </Panel>
         </PanelGroup>
       </div>
