@@ -1,6 +1,7 @@
 'use client';
 
 import { useQuery } from '@tanstack/react-query';
+import type { DashboardSummaryResponse } from '@/lib/server/apiClient';
 
 async function loadSummary(season?: number) {
   const search = season !== undefined ? `?season=${season}` : '';
@@ -8,11 +9,12 @@ async function loadSummary(season?: number) {
   if (!res.ok) {
     throw new Error('Failed to load dashboard summary');
   }
-  return res.json();
+  const data = (await res.json()) as DashboardSummaryResponse;
+  return data;
 }
 
 export function useDashboardSummary(season?: number) {
-  return useQuery({
+  return useQuery<DashboardSummaryResponse>({
     queryKey: ['dashboard-summary', season ?? 'latest'],
     queryFn: () => loadSummary(season),
   });

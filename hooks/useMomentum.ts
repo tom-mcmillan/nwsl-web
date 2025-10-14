@@ -1,20 +1,26 @@
 'use client';
 
 import { useQuery } from '@tanstack/react-query';
+import type { MomentumResponse } from '@/lib/server/apiClient';
+
+async function loadMomentum(matchId: string): Promise<MomentumResponse> {
+  const search = new URLSearchParams({ matchId });
+  const res = await fetch(`/api/dashboard/momentum?${search.toString()}`);
+  if (!res.ok) {
+    throw new Error('Failed to load match momentum');
+  }
+  const data = (await res.json()) as MomentumResponse;
+  return data;
+}
+
 export function useMomentum(matchId?: string) {
-  return useQuery({
+  return useQuery<MomentumResponse>({
     queryKey: ['momentum', matchId],
     queryFn: () => {
       if (!matchId) {
-        return Promise.reject(new Error('matchId is required'));
+        throw new Error('matchId is required');
       }
-      const search = new URLSearchParams({ matchId });
-      return fetch(`/api/dashboard/momentum?${search.toString()}`).then((res) => {
-        if (!res.ok) {
-          throw new Error('Failed to load match momentum');
-        }
-        return res.json();
-      });
+      return loadMomentum(matchId);
     },
     enabled: Boolean(matchId),
   });
