@@ -1,6 +1,7 @@
 'use client';
 
 import { useQuery } from '@tanstack/react-query';
+import type { PlayerValuationResponse } from '@/lib/server/apiClient';
 
 interface Params {
   season?: number;
@@ -13,8 +14,16 @@ interface Params {
 
 export function usePlayerValuation(params: Params) {
   const { season, competition, teamId, minMinutes, limit, orderBy } = params;
-  return useQuery({
-    queryKey: ['player-valuation', season ?? 'latest', competition ?? 'regular_season', teamId ?? 'all', minMinutes ?? 600, limit ?? 25, orderBy ?? 'vaep'],
+  return useQuery<PlayerValuationResponse>({
+    queryKey: [
+      'player-valuation',
+      season ?? 'latest',
+      competition ?? 'regular_season',
+      teamId ?? 'all',
+      minMinutes ?? 600,
+      limit ?? 25,
+      orderBy ?? 'vaep',
+    ],
     queryFn: async () => {
       const search = new URLSearchParams();
       if (season !== undefined) search.set('season', String(season));
@@ -28,7 +37,8 @@ export function usePlayerValuation(params: Params) {
       if (!res.ok) {
         throw new Error('Failed to load player valuation');
       }
-      return res.json();
+      const data = (await res.json()) as PlayerValuationResponse;
+      return data;
     },
   });
 }
