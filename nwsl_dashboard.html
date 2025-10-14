@@ -1,0 +1,937 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>NWSL Data — Capital IQ Pro–style Dashboard</title>
+<style>
+  :root{
+    --bg:#f7f8fa;
+    --panel:#ffffff;
+    --line:#e3e6eb;
+    --line-strong:#cfd5de;
+    --text:#1f2a37;
+    --muted:#6b7280;
+    --accent:#0b75ff;
+    --accent-2:#dc2626;
+    --good:#22c55e;
+    --bad:#ef4444;
+    --warning:#f59e0b;
+    --chip:#eef2f7;
+    --shadow:0 1px 0 rgba(0,0,0,.06),0 6px 18px rgba(32,44,64,.06);
+    --radius:8px;
+    --header-height:64px;
+    --chat-width:360px;
+  }
+  *{box-sizing:border-box}
+  html,body{height:100%}
+  body{
+    margin:0;
+    background:var(--bg);
+    color:var(--text);
+    font-family: system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Arial,sans-serif;
+    line-height:1.35;
+  }
+
+  /* Persistent top header */
+  .topbar{
+    position:sticky; top:0; z-index:1000;
+    height:var(--header-height);
+    background:#fff;
+    border-bottom:1px solid var(--line);
+    display:flex; align-items:center; gap:16px;
+    padding:0 16px;
+  }
+  .brand{
+    display:flex; align-items:center; gap:10px; font-weight:700;
+  }
+  .brand .dot{width:9px;height:9px;border-radius:50%;background:var(--accent)}
+  .brand small{color:#9aa3af;font-weight:600;border:1px solid var(--line);padding:2px 6px;border-radius:6px;margin-left:4px}
+  .tabs{display:flex; gap:8px; flex-wrap:wrap}
+  .tab{
+    border:1px solid var(--line);
+    background:var(--chip);
+    padding:6px 10px; border-radius:6px; font-weight:600; color:#2f3a4a;
+    cursor:pointer; user-select:none;
+  }
+  .tab.active{background:#fff;border-color:var(--line-strong)}
+  .search{margin-left:auto; display:flex; align-items:center; gap:8px}
+  .search input{
+    border:1px solid var(--line); border-radius:999px; padding:8px 12px; width:280px;
+    outline:none;
+  }
+  .statsbar{
+    display:flex; gap:18px; align-items:center; padding:10px 16px; background:#fff;border-bottom:1px solid var(--line);
+    position:sticky; top:var(--header-height); z-index:900;
+  }
+  .chip{
+    display:flex; align-items:center; gap:6px; font-weight:700; color:#334155;
+  }
+  .chip span{
+    font-weight:800; color:#111827; padding:2px 8px; background:var(--chip); border:1px solid var(--line); border-radius:6px;
+  }
+
+  /* Layout */
+  .wrap{
+    padding:12px;
+    padding-right:calc(var(--chat-width) + 20px);
+  }
+  .grid{
+    display:grid;
+    grid-template-columns: repeat(12, minmax(0, 1fr));
+    gap:12px;
+  }
+  .panel{
+    background:var(--panel);
+    border:1px solid var(--line);
+    border-radius:var(--radius);
+    box-shadow:var(--shadow);
+    display:flex; flex-direction:column; min-height:220px;
+    overflow:hidden;
+    resize: both; /* simple adjustable panels */
+  }
+  .panel .hdr{
+    display:flex; align-items:center; gap:10px;
+    padding:10px 12px; border-bottom:1px solid var(--line); background:#fff;
+  }
+  .panel .hdr .title{font-weight:800}
+  .panel .hdr .sub{margin-left:auto; color:var(--muted); font-size:12px}
+  .panel .tools{display:flex; gap:6px; margin-left:8px}
+  .toolbtn{
+    border:1px solid var(--line);
+    background:#fff; border-radius:6px; padding:4px 8px; font-size:12px; cursor:pointer;
+  }
+  .panel .body{padding:12px; overflow:auto; flex:1}
+  .kpi-row{display:flex; gap:12px; flex-wrap:wrap}
+  .kpi{
+    background:var(--chip); border:1px solid var(--line); border-radius:8px; padding:10px 12px;
+    min-width:120px;
+  }
+  .kpi .v{font-size:20px;font-weight:800}
+  .kpi.up .v{color:var(--good)}
+  .kpi.down .v{color:var(--bad)}
+  .table{
+    width:100%; border-collapse:collapse; font-size:13px;
+  }
+  .table th, .table td{
+    padding:8px 8px; border-bottom:1px solid var(--line);
+    text-align:left; white-space:nowrap;
+  }
+  .table thead th{position:sticky; top:0; background:#fbfcff; z-index:1; border-bottom:1px solid var(--line-strong)}
+  .badge{border:1px solid var(--line); background:#f3f4f6; border-radius:999px; padding:1px 8px; font-size:11px; font-weight:700}
+  .selector-row{display:flex; gap:8px; flex-wrap:wrap; margin-bottom:8px}
+  select, input[type="number"]{
+    border:1px solid var(--line); border-radius:6px; padding:6px 8px; background:#fff;
+  }
+  .note{color:var(--muted); font-size:12px}
+
+  /* Canvas placeholder */
+  .chart{width:100%; height:220px; border:1px dashed var(--line); border-radius:6px; background:linear-gradient(180deg,#ffffff,#fafbfe)}
+
+  /* Right-docked ChatKit */
+  .chat{
+    position:fixed; right:12px; top:calc(var(--header-height) + 12px);
+    width:var(--chat-width); bottom:12px; z-index:950;
+    display:flex; flex-direction:column;
+    border:1px solid var(--line); background:#fff; border-radius:12px; box-shadow:var(--shadow);
+    overflow:hidden;
+  }
+  .chat .c-head{display:flex; gap:8px; align-items:center; padding:10px 12px; border-bottom:1px solid var(--line)}
+  .chat .c-head .dot{width:8px;height:8px;border-radius:50%;background:var(--accent)}
+  .chat .c-title{font-weight:800}
+  .chat .c-body{flex:1; overflow:auto; padding:10px 12px; background:#fafbff}
+  .msg{margin:8px 0; display:flex; gap:8px}
+  .msg .bubble{
+    max-width:80%; padding:8px 10px; border-radius:10px; border:1px solid var(--line); background:#fff;
+    font-size:13px;
+  }
+  .msg.me{justify-content:flex-end}
+  .msg.me .bubble{background:#eaf1ff; border-color:#cfe3ff}
+  .chat .c-input{display:flex; gap:8px; padding:10px 12px; border-top:1px solid var(--line); background:#fff}
+  .chat textarea{
+    flex:1; resize:none; padding:10px; height:44px;
+    border:1px solid var(--line); border-radius:10px; outline:none;
+  }
+  .chat .send{padding:10px 14px; border-radius:10px; border:1px solid var(--line); background:#0b75ff; color:#fff; font-weight:700; cursor:pointer}
+  .helper{font-size:12px;color:var(--muted);padding:6px 8px}
+
+  /* Width presets for panels in grid (12-col grid) */
+  .span-4{grid-column: span 4;}
+  .span-6{grid-column: span 6;}
+  .span-8{grid-column: span 8;}
+  .span-12{grid-column: span 12;}
+
+  @media (max-width:1400px){
+    .wrap{padding-right:12px}
+    .chat{position:fixed; right:0; top:auto; bottom:0; width:100%; height:50vh; border-radius:12px 12px 0 0}
+  }
+  @media (max-width:900px){
+    .grid{grid-template-columns: repeat(6, 1fr)}
+    .span-4{grid-column: span 6;}
+    .span-6{grid-column: span 6;}
+    .span-8{grid-column: span 6;}
+    .span-12{grid-column: span 6;}
+    .statsbar{flex-wrap:wrap}
+    .search input{width:180px}
+  }
+</style>
+</head>
+<body>
+  <!-- Top Header -->
+  <div class="topbar">
+    <div class="brand">
+      <div class="dot"></div>
+      <div>NWSL Data <small>PRO</small></div>
+    </div>
+    <div class="tabs">
+      <div class="tab active">Dashboard</div>
+      <div class="tab">Teams</div>
+      <div class="tab">Players</div>
+      <div class="tab">Matches</div>
+      <div class="tab">SQL Explorer</div>
+      <div class="tab">Methodology</div>
+    </div>
+    <div class="search">
+      <input id="globalSearch" placeholder="Search team, player, match…"/>
+    </div>
+  </div>
+  <!-- Stats bar under header -->
+  <div class="statsbar">
+    <div class="chip">Matches <span id="metricMatches">1,327</span></div>
+    <div class="chip">Players <span id="metricPlayers">903</span></div>
+    <div class="chip">Teams <span id="metricTeams">14</span></div>
+    <div class="chip">Events <span id="metricEvents">2.4M</span></div>
+    <div class="note">Data sources include: dim_team, dim_match, dim_player_contract, fact_event_2024, fact_event_xg, view_event_xg_best, agg_goalkeeper_match, fact_match_goal_timeline.</div>
+  </div>
+
+  <div class="wrap">
+    <div class="grid" id="grid">
+      <!-- 1. Team Overview & Key Performance -->
+      <section class="panel span-8" id="panelTeamOverview">
+        <div class="hdr">
+          <div class="title">Team Overview & Key Performance</div>
+          <div class="tools">
+            <button class="toolbtn" onclick="toggleSQL('sql-team')">SQL</button>
+            <button class="toolbtn" onclick="randomizeTeamKPIs()">Refresh</button>
+          </div>
+          <div class="sub">Sources: dim_team, dim_match, fact_event_2024</div>
+        </div>
+        <div class="body">
+          <div class="selector-row">
+            <label>Teams:
+              <select id="teamSelect" multiple size="2">
+                <option>Orlando Pride</option>
+                <option>Washington Spirit</option>
+                <option>Kansas City Current</option>
+                <option>Gotham FC</option>
+                <option>San Diego Wave</option>
+                <option>Portland Thorns</option>
+                <option>North Carolina Courage</option>
+                <option>Chicago Red Stars</option>
+                <option>Angel City FC</option>
+                <option>Racing Louisville</option>
+                <option>Seattle Reign</option>
+                <option>Houston Dash</option>
+                <option>Utah Royals</option>
+                <option>Bay FC</option>
+              </select>
+            </label>
+            <label>Season:
+              <select id="seasonSelect">
+                <option selected>2024</option>
+                <option>2023</option>
+              </select>
+            </label>
+            <span class="badge">Comparative analysis</span>
+          </div>
+          <div class="kpi-row" id="teamKpis">
+            <div class="kpi up">
+              <div class="label">Pts / 90</div>
+              <div class="v" id="kpiPts">2.1</div>
+              <div class="note">Derived from dim_match</div>
+            </div>
+            <div class="kpi">
+              <div class="label">Goals For</div>
+              <div class="v" id="kpiGF">42</div>
+              <div class="note">fact_event_2024: goal events</div>
+            </div>
+            <div class="kpi">
+              <div class="label">Goals Against</div>
+              <div class="v" id="kpiGA">23</div>
+              <div class="note">fact_event_2024</div>
+            </div>
+            <div class="kpi up">
+              <div class="label">Shot Conversion</div>
+              <div class="v" id="kpiConv">12.9%</div>
+              <div class="note">goals/shots</div>
+            </div>
+            <div class="kpi">
+              <div class="label">Market Proxy</div>
+              <div class="v" id="kpiVal">↑</div>
+              <div class="note">inferred via results + xG</div>
+            </div>
+          </div>
+          <canvas class="chart" id="teamOverviewChart" height="220"></canvas>
+          <div id="sql-team" class="note" style="display:none;margin-top:10px">
+            Example SQL (aggregate by team)
+<pre>
+SELECT
+  t.team_name,
+  SUM(CASE WHEN (m.home_team_id=t.team_id AND m.home_goals>m.away_goals)
+            OR (m.away_team_id=t.team_id AND m.away_goals>m.home_goals)
+      THEN 3
+      WHEN m.home_goals=m.away_goals THEN 1 ELSE 0 END) AS points,
+  SUM(CASE WHEN e.event_type='shot' THEN 1 END) AS shots,
+  SUM(CASE WHEN e.event_type='shot' AND e.outcome='goal' THEN 1 END) AS goals,
+  AVG(x.xg) AS avg_shot_xg
+FROM dim_team t
+JOIN dim_match m ON m.season=:season
+  AND (m.home_team_id=t.team_id OR m.away_team_id=t.team_id)
+LEFT JOIN fact_event_2024 e ON e.match_id=m.match_id AND e.team_id=t.team_id
+LEFT JOIN fact_event_xg x ON x.event_id=e.event_id
+WHERE t.team_name = ANY(:teams)
+GROUP BY t.team_name
+ORDER BY points DESC;
+</pre>
+          </div>
+        </div>
+      </section>
+
+      <!-- 2. Player Valuation & Advanced Metrics -->
+      <section class="panel span-4" id="panelPlayerVal">
+        <div class="hdr">
+          <div class="title">Player Valuation & Advanced Metrics</div>
+          <div class="tools">
+            <button class="toolbtn" onclick="toggleSQL('sql-player')">SQL</button>
+            <button class="toolbtn" onclick="seedPlayers()">Refresh</button>
+          </div>
+          <div class="sub">Sources: dim_player_contract, fact_event_2024, fact_event_xg, view_event_xg_best</div>
+        </div>
+        <div class="body">
+          <div class="selector-row">
+            <label>Min minutes:
+              <input type="number" id="minMin" value="600" min="0" step="30"/>
+            </label>
+            <label>Sort:
+              <select id="playerSort">
+                <option value="vaep">VAEP proxy</option>
+                <option value="xt">xT</option>
+                <option value="xg">xG</option>
+              </select>
+            </label>
+            <span class="badge">Valuation proxy = usage × impact</span>
+          </div>
+          <table class="table" id="playerTable">
+            <thead>
+              <tr>
+                <th>Player</th><th>Team</th><th>Pos</th>
+                <th>Min</th><th>xG</th><th>xA</th><th>xT</th><th>VAEP*</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+          <div class="note">*VAEP proxy uses event values from view_event_xg_best (shot value) + pass/pressure heuristics from fact_event_2024.</div>
+          <div id="sql-player" class="note" style="display:none;margin-top:10px">
+<pre>
+WITH player_events AS (
+  SELECT e.player_id, e.team_id, e.minute,
+         SUM(CASE WHEN e.event_type='shot' THEN x.xg ELSE 0 END) AS xg,
+         SUM(CASE WHEN e.event_type='pass' AND e.outcome='complete' THEN xbest.pass_value ELSE 0 END) AS xt,
+         SUM(CASE WHEN e.event_type IN ('pass','shot','dribble') THEN COALESCE(xbest.vaep_value,0) END) AS vaep
+  FROM fact_event_2024 e
+  LEFT JOIN fact_event_xg x ON x.event_id=e.event_id
+  LEFT JOIN view_event_xg_best xbest ON xbest.event_id=e.event_id
+  GROUP BY e.player_id, e.team_id, e.minute
+),
+ agg AS (
+  SELECT p.player_id, t.team_name, pc.position,
+         COUNT(*) FILTER (WHERE minute IS NOT NULL) AS minutes,
+         SUM(xg) AS xg, SUM(xt) AS xt, SUM(vaep) AS vaep
+  FROM player_events p
+  JOIN dim_player_contract pc ON pc.player_id=p.player_id AND pc.season=:season
+  JOIN dim_team t ON t.team_id=pc.team_id
+  GROUP BY p.player_id, t.team_name, pc.position
+)
+SELECT * FROM agg WHERE minutes>=:min_minutes
+ORDER BY CASE WHEN :sort='vaep' THEN vaep WHEN :sort='xt' THEN xt ELSE xg END DESC
+LIMIT 100;
+</pre>
+          </div>
+        </div>
+      </section>
+
+      <!-- 3. Team vs Team Comparison -->
+      <section class="panel span-6" id="panelTeamVs">
+        <div class="hdr">
+          <div class="title">Team vs Team Comparison</div>
+          <div class="tools">
+            <button class="toolbtn" onclick="toggleSQL('sql-compare')">SQL</button>
+          </div>
+          <div class="sub">Sources: dim_team, dim_match, fact_event_2024</div>
+        </div>
+        <div class="body">
+          <div class="selector-row">
+            <label>Team A:
+              <select id="teamA"></select>
+            </label>
+            <label>Team B:
+              <select id="teamB"></select>
+            </label>
+            <label>Window:
+              <select id="windowSelect">
+                <option value="season">Season</option>
+                <option value="last5">Last 5</option>
+              </select>
+            </label>
+          </div>
+          <table class="table" id="compareTable">
+            <thead>
+              <tr>
+                <th>Metric</th><th>Team A</th><th>Team B</th><th>Edge</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+          <canvas class="chart" id="compareChart" height="200" style="margin-top:10px"></canvas>
+          <div id="sql-compare" class="note" style="display:none;margin-top:10px">
+<pre>
+WITH team_match AS (
+  SELECT team_id,
+         SUM(CASE WHEN is_home AND home_goals>away_goals OR NOT is_home AND away_goals>home_goals THEN 1 END) AS wins,
+         SUM(CASE WHEN home_goals=away_goals THEN 1 END) AS draws,
+         SUM(CASE WHEN is_home AND home_goals<away_goals OR NOT is_home AND away_goals<home_goals THEN 1 END) AS losses,
+         SUM(home_expected_goals) FILTER(WHERE is_home) + SUM(away_expected_goals) FILTER(WHERE NOT is_home) AS xg
+  FROM (
+     SELECT m.match_id, m.home_team_id AS team_id, TRUE AS is_home,
+            m.home_goals, m.away_goals,
+            SUM(x.xg) FILTER (WHERE e.team_id=m.home_team_id) AS home_expected_goals,
+            SUM(x.xg) FILTER (WHERE e.team_id=m.away_team_id) AS away_expected_goals
+     FROM dim_match m
+     LEFT JOIN fact_event_2024 e ON e.match_id=m.match_id
+     LEFT JOIN fact_event_xg x ON x.event_id=e.event_id
+     WHERE m.season=:season
+     GROUP BY 1,2,3,4,5
+     UNION ALL
+     SELECT m.match_id, m.away_team_id, FALSE, m.home_goals, m.away_goals,
+            SUM(x.xg) FILTER (WHERE e.team_id=m.home_team_id),
+            SUM(x.xg) FILTER (WHERE e.team_id=m.away_team_id)
+     FROM dim_match m
+     LEFT JOIN fact_event_2024 e ON e.match_id=m.match_id
+     LEFT JOIN fact_event_xg x ON x.event_id=e.event_id
+     WHERE m.season=:season
+     GROUP BY 1,2,3,4,5
+  ) s
+  GROUP BY team_id
+)
+SELECT ta.*, tb.*
+FROM team_match ta
+JOIN team_match tb ON tb.team_id=:team_b
+WHERE ta.team_id=:team_a;
+</pre>
+          </div>
+        </div>
+      </section>
+
+      <!-- 4. Goalkeeper Performance Analysis -->
+      <section class="panel span-6" id="panelGK">
+        <div class="hdr">
+          <div class="title">Goalkeeper Performance Analysis</div>
+          <div class="tools">
+            <button class="toolbtn" onclick="toggleSQL('sql-gk')">SQL</button>
+          </div>
+          <div class="sub">Sources: agg_goalkeeper_match, dim_player_contract, fact_event_2024</div>
+        </div>
+        <div class="body">
+          <div class="selector-row">
+            <label>Min starts:
+              <input type="number" id="gkMin" value="8" min="0" step="1"/>
+            </label>
+            <label>Sort by:
+              <select id="gkSort">
+                <option value="psxg">PSxG +/-</option>
+                <option value="save%">Save %</option>
+                <option value="longPassAcc">Long Pass Acc</option>
+              </select>
+            </label>
+          </div>
+          <table class="table" id="gkTable">
+            <thead>
+              <tr>
+                <th>Goalkeeper</th><th>Team</th><th>Starts</th><th>Saves</th><th>Save %</th><th>GA</th><th>PSxG +/-</th><th>Dist Acc</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+          <canvas class="chart" id="gkChart" height="200" style="margin-top:10px"></canvas>
+          <div id="sql-gk" class="note" style="display:none;margin-top:10px">
+<pre>
+SELECT pc.player_name, t.team_name,
+       SUM(gk.starts) AS starts,
+       SUM(gk.saves) AS saves,
+       ROUND(100.0*SUM(gk.saves)/NULLIF(SUM(gk.shots_on_target),0),1) AS save_pct,
+       SUM(gk.goals_conceded) AS ga,
+       ROUND(SUM(gk.post_shot_xg) - SUM(gk.goals_conceded),2) AS psxg_minus,
+       ROUND(100.0*SUM(gk.long_pass_complete)/NULLIF(SUM(gk.long_pass_attempt),0),1) AS long_pass_acc
+FROM agg_goalkeeper_match gk
+JOIN dim_player_contract pc ON pc.player_id=gk.player_id AND pc.season=:season
+JOIN dim_team t ON t.team_id=pc.team_id
+GROUP BY pc.player_name, t.team_name
+HAVING SUM(gk.starts) >= :min_starts
+ORDER BY CASE WHEN :sort='psxg' THEN (SUM(gk.post_shot_xg)-SUM(gk.goals_conceded))
+              WHEN :sort='save%' THEN (SUM(gk.saves)/NULLIF(SUM(gk.shots_on_target),0))
+              ELSE (SUM(gk.long_pass_complete)/NULLIF(SUM(gk.long_pass_attempt),0))
+         END DESC;
+</pre>
+          </div>
+        </div>
+      </section>
+
+      <!-- 5. Match Momentum & Key Events -->
+      <section class="panel span-8" id="panelMomentum">
+        <div class="hdr">
+          <div class="title">Match Momentum & Key Events</div>
+          <div class="tools">
+            <button class="toolbtn" onclick="toggleSQL('sql-momentum')">SQL</button>
+          </div>
+          <div class="sub">Sources: fact_match_goal_timeline, fact_event_2024</div>
+        </div>
+        <div class="body">
+          <div class="selector-row">
+            <label>Match:
+              <select id="matchSelect">
+                <option>Orlando Pride vs San Diego Wave (2024-08-24)</option>
+                <option>Washington Spirit vs Portland Thorns (2024-08-17)</option>
+                <option>Gotham FC vs Kansas City Current (2024-09-01)</option>
+              </select>
+            </label>
+            <span class="badge">Timeline includes goals, cards, penalties; momentum approximated via rolling xG</span>
+          </div>
+          <canvas class="chart" id="momentumChart" height="240"></canvas>
+          <table class="table" style="margin-top:10px">
+            <thead><tr><th>Minute</th><th>Event</th><th>Team</th><th>Player</th></tr></thead>
+            <tbody id="eventRows"></tbody>
+          </table>
+          <div id="sql-momentum" class="note" style="display:none;margin-top:10px">
+<pre>
+WITH ev AS (
+  SELECT e.match_id, e.minute, e.team_id,
+         CASE WHEN e.event_type='shot' THEN x.xg ELSE 0 END AS xg,
+         CASE WHEN e.event_type IN ('goal','penalty_goal') THEN 'GOAL'
+              WHEN e.event_type LIKE 'card%' THEN 'CARD'
+              ELSE NULL END AS key_event,
+         e.player_id
+  FROM fact_event_2024 e
+  LEFT JOIN fact_event_xg x ON x.event_id=e.event_id
+  WHERE e.match_id=:match_id
+),
+ roll AS (
+  SELECT minute,
+         SUM(xg) FILTER (WHERE team_id=:home_id) OVER (ORDER BY minute ROWS BETWEEN 10 PRECEDING AND CURRENT ROW) AS home_roll_xg,
+         SUM(xg) FILTER (WHERE team_id=:away_id) OVER (ORDER BY minute ROWS BETWEEN 10 PRECEDING AND CURRENT ROW) AS away_roll_xg
+  FROM ev
+)
+SELECT r.*, ev.key_event, t.team_name, pc.player_name
+FROM roll r
+LEFT JOIN ev ON ev.minute=r.minute AND ev.key_event IS NOT NULL
+LEFT JOIN dim_team t ON t.team_id=ev.team_id
+LEFT JOIN dim_player_contract pc ON pc.player_id=ev.player_id AND pc.season=2024
+ORDER BY minute;
+</pre>
+          </div>
+        </div>
+      </section>
+
+      <!-- 6. Player Style & Role -->
+      <section class="panel span-4" id="panelStyle">
+        <div class="hdr">
+          <div class="title">Player Style & Role</div>
+          <div class="tools">
+            <button class="toolbtn" onclick="toggleSQL('sql-style')">SQL</button>
+          </div>
+          <div class="sub">Sources: fact_event_2024, dim_player_contract</div>
+        </div>
+        <div class="body">
+          <div class="selector-row">
+            <label>Player:
+              <select id="stylePlayer">
+                <option>Trinity Rodman</option>
+                <option>Alex Morgan</option>
+                <option>Debinha</option>
+                <option>Lindsey Horan</option>
+                <option>Sophia Smith</option>
+              </select>
+            </label>
+            <label>Position group:
+              <select id="stylePos">
+                <option>FW</option><option>MF</option><option>DF</option>
+              </select>
+            </label>
+          </div>
+          <canvas class="chart" id="radar" height="260"></canvas>
+          <div class="note">Axes: progressive carries, chance creation, press intensity, ball recoveries, aerials, long pass rate. Values are percentile vs position.</div>
+          <div id="sql-style" class="note" style="display:none;margin-top:10px">
+<pre>
+WITH base AS (
+  SELECT e.player_id, pc.position,
+         COUNT(*) FILTER (WHERE e.event_type='carry' AND e.carry_progress>10) AS prog_carries,
+         COUNT(*) FILTER (WHERE e.event_type='key_pass') AS key_pass,
+         COUNT(*) FILTER (WHERE e.event_type='pressure') AS presses,
+         COUNT(*) FILTER (WHERE e.event_type='recovery') AS recoveries,
+         COUNT(*) FILTER (WHERE e.event_type='aerial' AND e.outcome='won') AS aerials_won,
+         COUNT(*) FILTER (WHERE e.event_type='pass' AND e.length>30) AS long_pass
+  FROM fact_event_2024 e
+  JOIN dim_player_contract pc ON pc.player_id=e.player_id AND pc.season=:season
+  GROUP BY e.player_id, pc.position
+),
+ per90 AS (
+  SELECT b.*, p.minutes/90.0 AS matches,
+         90.0*prog_carries/NULLIF(p.minutes,0) AS prog_carries_p90,
+         90.0*key_pass/NULLIF(p.minutes,0) AS key_pass_p90,
+         90.0*presses/NULLIF(p.minutes,0) AS presses_p90,
+         90.0*recoveries/NULLIF(p.minutes,0) AS recoveries_p90,
+         90.0*aerials_won/NULLIF(p.minutes,0) AS aerials_p90,
+         90.0*long_pass/NULLIF(p.minutes,0) AS long_pass_p90
+  FROM base b
+  JOIN (SELECT player_id, SUM(minutes_played) AS minutes FROM dim_match_player WHERE season=:season GROUP BY 1) p
+    ON p.player_id=b.player_id
+)
+SELECT * FROM per90 WHERE player_id=:player_id;
+</pre>
+          </div>
+        </div>
+      </section>
+    </div>
+  </div>
+
+  <!-- Right-docked OpenAI ChatKit -->
+  <aside class="chat" id="chat">
+    <div class="c-head">
+      <div class="dot"></div>
+      <div class="c-title">OpenAI ChatKit</div>
+      <div class="helper">Ask for SQL, metrics, or definitions</div>
+    </div>
+    <div class="c-body" id="chatBody">
+      <div class="msg">
+        <div class="bubble">
+          Hi! I can draft SQL for any panel, explain metrics, or summarize players/teams.<br/>
+          Try: "SQL for goalkeeper PSxG", "Compare Orlando vs Kansas City", or "What is VAEP?"
+        </div>
+      </div>
+    </div>
+    <div class="c-input">
+      <textarea id="chatInput" placeholder="Ask a question about the NWSL database or this dashboard"></textarea>
+      <button class="send" id="chatSend">Send</button>
+    </div>
+  </aside>
+
+<script>
+/* Seed data for demo (no network calls). Replace with real SQL-backed data loaders. */
+const TEAMS = [
+  "Orlando Pride","Washington Spirit","Kansas City Current","Gotham FC","San Diego Wave",
+  "Portland Thorns","North Carolina Courage","Chicago Red Stars","Angel City FC","Racing Louisville",
+  "Seattle Reign","Houston Dash","Utah Royals","Bay FC"
+];
+const COLORS = ["#0b75ff","#ef4444"];
+const rand = (a,b)=>Math.random()*(b-a)+a;
+const rnd = (n,d=0)=>Number(n.toFixed(d));
+
+/* Populate team selectors */
+function fillTeamSelects(){
+  const a=document.getElementById('teamA');
+  const b=document.getElementById('teamB');
+  TEAMS.forEach(t=>{
+    let o1=document.createElement('option'); o1.textContent=t; a.appendChild(o1);
+    let o2=document.createElement('option'); o2.textContent=t; b.appendChild(o2);
+  });
+  a.selectedIndex=0; b.selectedIndex=2;
+}
+fillTeamSelects();
+
+/* 1. Team Overview demo chart */
+function drawTeamOverview(){
+  const cvs=document.getElementById('teamOverviewChart');
+  const ctx=cvs.getContext('2d');
+  const w=cvs.width=cvs.clientWidth, h=cvs.height=cvs.clientHeight;
+  ctx.clearRect(0,0,w,h);
+  // Draw axes
+  ctx.strokeStyle="#d5d9e0"; ctx.lineWidth=1;
+  for(let i=0;i<5;i++){let y=h*(i/4); ctx.beginPath(); ctx.moveTo(40,y); ctx.lineTo(w-10,y); ctx.stroke();}
+  // Titles
+  ctx.fillStyle="#2f3a4a"; ctx.font="12px system-ui";
+  ctx.fillText("Non-pen xG (rolling 5g) vs Goals", 48, 16);
+  // data
+  const N=20, pad=50;
+  const xStep=(w-pad-20)/N;
+  let xg=[], g=[];
+  for(let i=0;i<N;i++){ xg.push(rand(0.6,1.8)); g.push(Math.max(0, rand(0.2,2.2)+(Math.random()>.7?1:0))); }
+  // line 1
+  ctx.strokeStyle=COLORS[0]; ctx.lineWidth=2; ctx.beginPath();
+  for(let i=0;i<N;i++){ let x=pad+i*xStep; let y=h-20 - (xg[i]/2.2)*(h-60);
+    if(i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
+  } ctx.stroke();
+  // line 2
+  ctx.strokeStyle="#22c55e"; ctx.setLineDash([4,3]); ctx.beginPath();
+  for(let i=0;i<N;i++){ let x=pad+i*xStep; let y=h-20 - (g[i]/2.2)*(h-60);
+    if(i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
+  } ctx.stroke(); ctx.setLineDash([]);
+  // legend
+  ctx.fillStyle=COLORS[0]; ctx.fillRect(48,h-26,10,10);
+  ctx.fillStyle="#2f3a4a"; ctx.fillText("xG", 62, h-17);
+  ctx.fillStyle="#22c55e"; ctx.fillRect(100,h-26,10,10);
+  ctx.fillStyle="#2f3a4a"; ctx.fillText("Goals", 114, h-17);
+}
+drawTeamOverview();
+function randomizeTeamKPIs(){
+  document.getElementById('kpiPts').textContent=rnd(rand(1.4,2.5),1);
+  document.getElementById('kpiGF').textContent=Math.floor(rand(25,55));
+  document.getElementById('kpiGA').textContent=Math.floor(rand(15,35));
+  document.getElementById('kpiConv').textContent=rnd(rand(9,15),1)+"%";
+  document.getElementById('kpiVal').textContent=Math.random()>.5?"↑":"→";
+  drawTeamOverview();
+}
+
+/* 2. Player Valuation table demo */
+function seedPlayers(){
+  const tbody=document.querySelector('#playerTable tbody'); tbody.innerHTML="";
+  const sample=[
+    ["Trinity Rodman","Washington Spirit","FW"],["Sophia Smith","Portland Thorns","FW"],
+    ["Alex Morgan","San Diego Wave","FW"],["Debinha","Kansas City Current","MF"],
+    ["Lindsey Horan","Portland Thorns","MF"],["Rose Lavelle","Gotham FC","MF"],
+    ["Mallory Swanson","Chicago Red Stars","FW"],["Adrianna Franch","Kansas City Current","GK"],
+    ["Alyssa Naeher","Chicago Red Stars","GK"],["Esther González","Gotham FC","FW"]
+  ];
+  sample.forEach(r=>{
+    const min=Math.floor(rand(700,1800));
+    const xg=rnd(rand(2,10),1), xa=rnd(rand(1,7),1), xt=rnd(rand(0.8,5.5),2);
+    const vaep=rnd(xg*0.6 + xa*0.5 + xt*0.8 + rand(-0.5,1.5),2);
+    const tr=document.createElement('tr');
+    tr.innerHTML=`<td>${r[0]}</td><td>${r[1]}</td><td>${r[2]}</td>
+                  <td>${min}</td><td>${xg}</td><td>${xa}</td><td>${xt}</td><td>${vaep}</td>`;
+    tbody.appendChild(tr);
+  });
+}
+seedPlayers();
+
+/* 3. Team vs Team comparison demo */
+function updateTeamCompare(){
+  const A=document.getElementById('teamA').value;
+  const B=document.getElementById('teamB').value;
+  const rows=[
+    ["Pts/90",rnd(rand(1.4,2.5),2),rnd(rand(1.0,2.3),2)],
+    ["xG For p90",rnd(rand(1.2,2.2),2),rnd(rand(0.9,2.1),2)],
+    ["xG Against p90",rnd(rand(0.7,1.6),2),rnd(rand(0.8,1.7),2)],
+    ["Possession %",rnd(rand(46,58),1),rnd(rand(43,59),1)],
+    ["High Press Regains p90",rnd(rand(4,8),1),rnd(rand(3,7),1)],
+    ["Box Entries p90",rnd(rand(9,16),1),rnd(rand(8,15),1)]
+  ];
+  const tb=document.querySelector('#compareTable tbody'); tb.innerHTML="";
+  rows.forEach(r=>{
+    const edge=rnd(r[1]-r[2],2);
+    const cls=edge>0?'style="color:#16a34a"':'style="color:#ef4444"';
+    const tr=document.createElement('tr');
+    tr.innerHTML=`<td>${r[0]}</td><td>${r[1]}</td><td>${r[2]}</td><td ${cls}>${edge>0?A:B} ${edge>0?'+':' '}${edge}</td>`;
+    tb.appendChild(tr);
+  });
+  drawBarCompare(rows.map(x=>x[1]), rows.map(x=>x[2]));
+}
+function drawBarCompare(a,b){
+  const cvs=document.getElementById('compareChart');
+  const ctx=cvs.getContext('2d');
+  const w=cvs.width=cvs.clientWidth, h=cvs.height=cvs.clientHeight;
+  ctx.clearRect(0,0,w,h);
+  const N=a.length, pad=30, bar=(w-pad*2)/(N*2+N*0.5);
+  for(let i=0;i<N;i++){
+    const x=pad+i*(bar*2+bar*0.5);
+    const ya= h-20 - (a[i]/Math.max(...a,...b))* (h-50);
+    const yb= h-20 - (b[i]/Math.max(...a,...b))* (h-50);
+    ctx.fillStyle=COLORS[0]; ctx.fillRect(x, ya, bar, h-20-ya);
+    ctx.fillStyle="#22c55e"; ctx.fillRect(x+bar+4, yb, bar, h-20-yb);
+  }
+}
+updateTeamCompare();
+document.getElementById('teamA').addEventListener('change',updateTeamCompare);
+document.getElementById('teamB').addEventListener('change',updateTeamCompare);
+document.getElementById('windowSelect').addEventListener('change',updateTeamCompare);
+
+/* 4. Goalkeeper analysis demo */
+function seedGKs(){
+  const tb=document.querySelector('#gkTable tbody'); tb.innerHTML="";
+  const gk=[
+    ["Alyssa Naeher","Chicago Red Stars",16,63,74,18,1.8,78],
+    ["Adrianna Franch","Kansas City Current",17,68,76,21,2.6,74],
+    ["Kailen Sheridan","San Diego Wave",18,71,77,20,3.4,79],
+    ["Casey Murphy","North Carolina Courage",14,49,73,19,1.1,76],
+    ["Jane Campbell","Houston Dash",16,58,70,25,-1.2,72]
+  ];
+  gk.forEach(g=>{
+    const tr=document.createElement('tr');
+    tr.innerHTML=`<td>${g[0]}</td><td>${g[1]}</td><td>${g[2]}</td><td>${g[3]}</td>
+                  <td>${g[4]}%</td><td>${g[5]}</td><td>${g[6]}</td><td>${g[7]}%</td>`;
+    tb.appendChild(tr);
+  });
+  drawGKChart(gk.map(x=>x[6]));
+}
+seedGKs();
+function drawGKChart(psxg){
+  const cvs=document.getElementById('gkChart');
+  const ctx=cvs.getContext('2d');
+  const w=cvs.width=cvs.clientWidth, h=cvs.height=cvs.clientHeight;
+  ctx.clearRect(0,0,w,h);
+  ctx.fillStyle="#f3f4f6"; ctx.fillRect(0,0,w,h);
+  const max=Math.max(...psxg.map(x=>Math.abs(x)))+0.5;
+  const barWidth=(w-60)/psxg.length;
+  psxg.forEach((v,i)=>{
+    const x=30+i*barWidth+6;
+    const y=h/2;
+    const len=(v/max)*(h/2-20);
+    ctx.fillStyle= v>=0 ? "#16a34a" : "#ef4444";
+    ctx.fillRect(x, y- (v>=0?len:0), barWidth-12, Math.abs(len));
+  });
+  ctx.strokeStyle="#cfd5de"; ctx.beginPath(); ctx.moveTo(20,h/2); ctx.lineTo(w-20,h/2); ctx.stroke();
+}
+
+/* 5. Momentum timeline demo */
+function drawMomentum(){
+  const cvs=document.getElementById('momentumChart');
+  const ctx=cvs.getContext('2d');
+  const w=cvs.width=cvs.clientWidth, h=cvs.height=cvs.clientHeight;
+  ctx.clearRect(0,0,w,h);
+  const N=95;
+  const home=[], away=[];
+  for(let i=0;i<N;i++){
+    home.push(Math.max(0, Math.sin(i/15)+rand(-0.2,0.6)));
+    away.push(Math.max(0, Math.cos(i/18)+rand(-0.2,0.5)));
+  }
+  const max=Math.max(...home,...away)+0.5;
+  // grid
+  ctx.strokeStyle="#e5e7eb"; ctx.lineWidth=1;
+  for(let m=0;m<=90;m+=15){
+    const x=20 + (w-40)*(m/90);
+    ctx.beginPath(); ctx.moveTo(x,10); ctx.lineTo(x,h-30); ctx.stroke();
+    ctx.fillStyle="#64748b"; ctx.font="11px system-ui"; ctx.fillText(m+"'", x-5, h-12);
+  }
+  // draw line function
+  function line(data,color){
+    ctx.beginPath();
+    for(let i=0;i<N;i++){
+      const x=20 + (w-40)*(i/90);
+      const y=h-30 - (data[i]/max)*(h-50);
+      i===0?ctx.moveTo(x,y):ctx.lineTo(x,y);
+    }
+    ctx.strokeStyle=color; ctx.lineWidth=2; ctx.stroke();
+  }
+  line(home, COLORS[0]); line(away, "#22c55e");
+}
+function seedKeyEvents(){
+  const tb=document.getElementById('eventRows'); tb.innerHTML="";
+  const events=[
+    [7,'Yellow Card','San Diego Wave','Taylor Kornieck'],
+    [22,'GOAL','Orlando Pride','Barbra Banda'],
+    [46,'Penalty Won','Orlando Pride','Messiah Bright'],
+    [47,'GOAL (Penalty)','Orlando Pride','Barbra Banda'],
+    [63,'GOAL','San Diego Wave','Alex Morgan'],
+    [88,'Red Card','San Diego Wave','Kaleigh Riehl']
+  ];
+  events.forEach(e=>{
+    const tr=document.createElement('tr');
+    tr.innerHTML=`<td>${e[0]}'</td><td>${e[1]}</td><td>${e[2]}</td><td>${e[3]}</td>`;
+    tb.appendChild(tr);
+  });
+}
+drawMomentum(); seedKeyEvents();
+
+/* 6. Player style radar chart */
+function drawRadar(){
+  const cvs=document.getElementById('radar');
+  const ctx=cvs.getContext('2d');
+  const w=cvs.width=cvs.clientWidth, h=cvs.height=cvs.clientHeight;
+  ctx.clearRect(0,0,w,h);
+  const center=[w/2,h/2+10], R=Math.min(w,h)/2-30;
+  const axes=['Prog Carries','Chance Creation','Press Intensity','Recoveries','Aerials','Long Pass %'];
+  // grid
+  ctx.strokeStyle="#e5e7eb";
+  for(let r=0.2; r<=1; r+=0.2){
+    ctx.beginPath();
+    for(let i=0;i<axes.length;i++){
+      const ang=(Math.PI*2/axes.length)*i - Math.PI/2;
+      const x=center[0]+Math.cos(ang)*R*r;
+      const y=center[1]+Math.sin(ang)*R*r;
+      i===0?ctx.moveTo(x,y):ctx.lineTo(x,y);
+    } ctx.closePath(); ctx.stroke();
+  }
+  // labels
+  ctx.fillStyle="#2f3a4a"; ctx.font="11px system-ui";
+  for(let i=0;i<axes.length;i++){
+    const ang=(Math.PI*2/axes.length)*i - Math.PI/2;
+    const x=center[0]+Math.cos(ang)*(R+10);
+    const y=center[1]+Math.sin(ang)*(R+10);
+    ctx.textAlign= x<center[0]?"right":"left";
+    if(Math.abs(x-center[0])<5) ctx.textAlign="center";
+    ctx.fillText(axes[i], x, y);
+  }
+  // random percentiles
+  const vals=[rand(.6,.95),rand(.4,.9),rand(.3,.9),rand(.2,.85),rand(.1,.8),rand(.3,.9)];
+  ctx.beginPath();
+  for(let i=0;i<axes.length;i++){
+    const ang=(Math.PI*2/axes.length)*i - Math.PI/2;
+    const x=center[0]+Math.cos(ang)*R*vals[i];
+    const y=center[1]+Math.sin(ang)*R*vals[i];
+    i===0?ctx.moveTo(x,y):ctx.lineTo(x,y);
+  } ctx.closePath();
+  ctx.fillStyle="rgba(11,117,255,0.20)"; ctx.fill();
+  ctx.strokeStyle="rgba(11,117,255,0.9)"; ctx.lineWidth=2; ctx.stroke();
+}
+drawRadar();
+
+/* SQL toggle helper */
+function toggleSQL(id){
+  const el=document.getElementById(id);
+  el.style.display = el.style.display==='none' ? 'block' : 'none';
+}
+
+/* OpenAI ChatKit (local demo, no external calls) */
+const chatBody=document.getElementById('chatBody');
+function pushMsg(text,me=false){
+  const msg=document.createElement('div'); msg.className='msg'+(me?' me':'');
+  msg.innerHTML=`<div class="bubble">${text}</div>`;
+  chatBody.appendChild(msg); chatBody.scrollTop=chatBody.scrollHeight;
+}
+function chatReply(q){
+  const s=q.toLowerCase();
+  if(s.includes('vaep')){
+    pushMsg('VAEP proxy: value-added estimates per action. This dashboard computes a proxy using: shot xG value from fact_event_xg + pass value approximations from view_event_xg_best, plus small positive values for progressive carries and successful dribbles. Normalize per 90 and minutes-weighted.', false);
+  }else if(s.includes('sql') && s.includes('goalkeeper')){
+    pushMsg('Try this:\nSELECT pc.player_name, t.team_name, SUM(gk.starts) starts, SUM(gk.saves) saves, ROUND(100.0*SUM(gk.saves)/NULLIF(SUM(gk.shots_on_target),0),1) AS save_pct, SUM(gk.goals_conceded) ga, ROUND(SUM(gk.post_shot_xg)-SUM(gk.goals_conceded),2) AS psxg_minus FROM agg_goalkeeper_match gk JOIN dim_player_contract pc ON pc.player_id=gk.player_id AND pc.season=2024 JOIN dim_team t ON t.team_id=pc.team_id GROUP BY pc.player_name,t.team_name HAVING SUM(gk.starts)>=8 ORDER BY psxg_minus DESC;', false);
+  }else if(s.includes('sql') && (s.includes('compare')||s.includes('team vs'))){
+    pushMsg('Use team-level aggregates from dim_match + event xG:\nWITH x AS (SELECT m.match_id, e.team_id, SUM(fx.xg) xg FROM dim_match m JOIN fact_event_2024 e ON e.match_id=m.match_id LEFT JOIN fact_event_xg fx ON fx.event_id=e.event_id WHERE m.season=2024 GROUP BY 1,2) SELECT t.team_name, COUNT(DISTINCT m.match_id) matches, SUM(CASE WHEN (m.home_team_id=t.team_id AND m.home_goals>m.away_goals) OR (m.away_team_id=t.team_id AND m.away_goals>m.home_goals) THEN 3 WHEN m.home_goals=m.away_goals THEN 1 ELSE 0 END) points, SUM(x.xg) xg FROM dim_team t JOIN dim_match m ON m.home_team_id=t.team_id OR m.away_team_id=t.team_id LEFT JOIN x ON x.match_id=m.match_id AND x.team_id=t.team_id WHERE t.team_name IN (:teamA,:teamB) GROUP BY 1;', false);
+  }else if(s.includes('timeline') || s.includes('momentum')){
+    pushMsg('Momentum is a rolling xG sum by minute (e.g., 10-minute window). Pull events from fact_event_2024 joined to fact_event_xg; align by minute using buckets. Overlay key events from fact_match_goal_timeline.', false);
+  }else if(s.includes('xt')){
+    pushMsg('xT proxy: credit passes/carries that move the ball into more dangerous zones. You can discretize pitch into zones and assign zone expected threat from historical outcomes, then compute delta xT for each pass/carry in fact_event_2024.', false);
+  }else{
+    pushMsg("I can help build SQL for any panel. Try 'SQL for Player Valuation', 'PSxG definition', or 'How is Market Proxy computed?'", false);
+  }
+}
+document.getElementById('chatSend').addEventListener('click',()=>{
+  const t=document.getElementById('chatInput');
+  const v=t.value.trim(); if(!v) return;
+  pushMsg(v,true); t.value='';
+  setTimeout(()=>chatReply(v),300);
+});
+
+/* Resize handling for canvas to redraw on panel resize */
+let resizeObserver = new ResizeObserver(() => {
+  drawTeamOverview(); updateTeamCompare(); drawGKChart([1,2,3]); drawMomentum(); drawRadar();
+});
+document.querySelectorAll('canvas').forEach(cv=>resizeObserver.observe(cv.parentElement));
+
+/* Quality-of-life: click panel header to collapse/expand body */
+document.querySelectorAll('.panel .hdr').forEach(h=>{
+  h.addEventListener('dblclick',()=>{
+    const body=h.parentElement.querySelector('.body');
+    body.style.display = body.style.display==='none' ? 'block' : 'none';
+  });
+});
+</script>
+</body>
+</html>

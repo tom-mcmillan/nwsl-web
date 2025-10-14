@@ -1,0 +1,4 @@
+project_id = "nwsl-data"
+region     = "us-central1"
+
+# Populate with real secret names or resource IDs when Terraform is introduced.

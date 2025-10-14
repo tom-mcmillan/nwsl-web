@@ -1,0 +1,12 @@
+{
+  "production": {
+    "NWSL_API_KEY": "prod-api-bearer-key-edge",
+    "OPENAI_API_KEY": "prod-integrations-api-key-openai",
+    "CHATKIT_WORKFLOW_ID": "prod-integrations-workflow-id-chatkit"
+  },
+  "preview": {
+    "NWSL_API_KEY": "dev-api-bearer-key-edge",
+    "OPENAI_API_KEY": "dev-integrations-api-key-openai",
+    "CHATKIT_WORKFLOW_ID": "dev-integrations-workflow-id-chatkit"
+  }
+}

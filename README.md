@@ -1,47 +1,20 @@
-## Getting Started
+# NWSL Ops
 
-Install dependencies and generate the Prisma client:
+Operational runbooks, infrastructure definitions, and shared automation for the
+NWSL analytics platform. This repository hosts the cross-service documentation
+and scripts that keep deployments, secrets, and monitoring consistent across
+projects.
 
-```bash
-npm install
-DATABASE_URL="postgresql://placeholder" npx prisma generate
-```
+## Layout
 
-Run the development server:
+- `docs/` – canonical documentation (secret inventory, architecture diagrams,
+  runbooks, monitoring notes, onboarding checklist).
+- `scripts/` – helper scripts for fetching secrets, deploying services, and
+  executing smoke tests.
+- `infrastructure/` – infrastructure-as-code (Terraform) or notes describing
+  the current manual setup.
+- `ci/` – reference CI/CD configuration files (Cloud Build, Vercel mappings).
+- `Makefile` – convenience targets that tie scripts together.
 
-```bash
-npm run dev
-```
-
-Visit [http://localhost:3000](http://localhost:3000) to access the dashboard.
-
-### Required Environment Variables
-
-Create an `.env.local` file and populate the following keys:
-
-```
-# Backend API
-NWSL_API_BASE_URL=http://127.0.0.1:8080
-NWSL_API_KEY=your-api-key
-NWSL_PANEL_ADMIN_TOKEN=local-panel-admin-secret
-
-# Database & NextAuth
-DATABASE_URL=postgresql://user:pass@host:5432/dbname
-NEXTAUTH_SECRET=generate-a-long-random-string
-NEXTAUTH_URL=http://localhost:3000
-GOOGLE_CLIENT_ID=google-oauth-client-id
-GOOGLE_CLIENT_SECRET=google-oauth-client-secret
-
-# Stripe Billing (optional)
-# Temporarily not required while NWSL Pro access is complimentary.
-```
-
-The panel admin token must match the `PANEL_ADMIN_TOKEN` configured on the Flask API. Google OAuth is required for sign-in. Billing is paused—every authenticated user is treated as NWSL Pro during early access.
-
-### Database Migrations
-
-```
-npx prisma migrate deploy
-```
-
-This project expects a Postgres database. Prisma manages the `users`, `accounts`, `sessions`, and `subscriptions` tables used by NextAuth (Stripe support can be re-enabled later).
+See `docs/onboarding.md` for guidance on how to use the repository and update it
+as the platform evolves.

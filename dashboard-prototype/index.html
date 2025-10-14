@@ -1,0 +1,457 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>NWSL Data Pro — Dashboard Prototype</title>
+    <link rel="stylesheet" href="css/style.css" />
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/gridstack@10.0.2/dist/gridstack.min.css"
+    />
+    <script
+      src="https://cdn.plot.ly/plotly-2.35.2.min.js"
+      defer
+    ></script>
+    <script
+      src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"
+      defer
+    ></script>
+    <script
+      src="https://cdn.jsdelivr.net/npm/gridstack@10.0.2/dist/gridstack-h5.js"
+      defer
+    ></script>
+    <script src="js/main.js" defer></script>
+  </head>
+  <body>
+    <header class="topbar">
+      <div class="brand">
+        <span class="brand__name">NWSL Data</span>
+        <span class="brand__badge">PRO</span>
+      </div>
+      <nav class="nav" aria-label="Primary">
+        <a href="#" class="nav__link nav__link--active">Dashboard</a>
+        <a href="#" class="nav__link">Teams</a>
+        <a href="#" class="nav__link">Players</a>
+        <a href="#" class="nav__link">Matches</a>
+        <a href="#" class="nav__link">SQL Explorer</a>
+        <a href="#" class="nav__link">Research</a>
+      </nav>
+      <div class="stats">
+        <div class="stats__chip">
+          Matches <b id="headline-matches" aria-live="polite">—</b>
+        </div>
+        <div class="stats__chip">
+          Players <b id="headline-players" aria-live="polite">—</b>
+        </div>
+        <div class="stats__chip">
+          Teams <b id="headline-teams" aria-live="polite">—</b>
+        </div>
+        <div class="stats__chip">
+          Events <b id="headline-events" aria-live="polite">—</b>
+        </div>
+      </div>
+      <form class="search" role="search">
+        <label for="global-search" class="sr-only">Search</label>
+        <input
+          id="global-search"
+          name="q"
+          type="search"
+          placeholder="Search teams, players, matches…"
+        />
+      </form>
+    </header>
+
+    <main class="app">
+      <section
+        class="grid grid-stack"
+        id="dashboard-grid"
+        data-gs-resize="true"
+        data-gs-move="true"
+      >
+        <!-- Panel 1 -->
+        <article
+          class="panel grid-stack-item c1"
+          id="panel-team-overview"
+          data-panel="team-overview"
+          data-gs-x="0"
+          data-gs-y="0"
+          data-gs-width="6"
+          data-gs-height="5"
+        >
+          <header class="panel__header">
+            <div>
+              <h2>Team Overview &amp; Key Performance</h2>
+              <p class="panel__subtitle">
+                Sources: dim_team, dim_match, fact_event_2024
+              </p>
+            </div>
+            <div class="panel__tools">
+              <select id="team-overview-season" class="tool-btn">
+                <option value="2025">2025</option>
+                <option value="2024" selected>2024</option>
+              </select>
+              <button class="tool-btn" data-action="export-team-overview">
+                Export CSV
+              </button>
+            </div>
+          </header>
+          <div class="panel__content">
+            <div class="kpi-group">
+              <div class="kpi-box">
+                <span>League Avg Goals</span>
+                <strong id="kpi-league-goals">—</strong>
+              </div>
+              <div class="kpi-box">
+                <span>Avg Shots</span>
+                <strong id="kpi-league-shots">—</strong>
+              </div>
+              <div class="kpi-box">
+                <span>Avg Pass Acc%</span>
+                <strong id="kpi-pass-acc">—</strong>
+              </div>
+              <div class="kpi-box">
+                <span>Home Win%</span>
+                <strong id="kpi-home-win">—</strong>
+              </div>
+            </div>
+            <div id="chart-team-bars" class="chart-shell" role="img" aria-label="Team performance bar chart placeholder"></div>
+            <table id="team-overview-table" class="data-table">
+              <thead>
+                <tr>
+                  <th>Team</th>
+                  <th>MP</th>
+                  <th>W</th>
+                  <th>D</th>
+                  <th>L</th>
+                  <th>GF</th>
+                  <th>GA</th>
+                  <th>GD</th>
+                  <th>PPG</th>
+                  <th>Shot Acc%</th>
+                  <th>Pass Acc%</th>
+                </tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+            <details class="sql-block">
+              <summary>SQL template</summary>
+              <pre><code class="language-sql">-- Replace with production query
+SELECT * FROM team_summary_view WHERE season = :season;</code></pre>
+            </details>
+          </div>
+        </article>
+
+        <!-- Panel 2 -->
+        <article
+          class="panel grid-stack-item c2"
+          id="panel-player-valuation"
+          data-panel="player-valuation"
+          data-gs-x="6"
+          data-gs-y="0"
+          data-gs-width="6"
+          data-gs-height="5"
+        >
+          <header class="panel__header">
+            <div>
+              <h2>Player Valuation &amp; Advanced Metrics</h2>
+              <p class="panel__subtitle">
+                Sources: dim_player_contract, fact_event_xg, fact_action_xt
+              </p>
+            </div>
+            <div class="panel__tools">
+              <select id="player-team-filter" class="tool-btn"></select>
+              <button class="tool-btn" data-action="toggle-value-flow">
+                Toggle Value Flow
+              </button>
+            </div>
+          </header>
+          <div class="panel__content panel__content--split">
+            <div class="panel__content-main">
+              <div class="kpi-group">
+                <div class="kpi-box">
+                  <span>Selected Team</span>
+                  <strong id="kpi-selected-team">All Teams</strong>
+                </div>
+                <div class="kpi-box">
+                  <span>Top xG</span>
+                  <strong id="kpi-top-xg">—</strong>
+                </div>
+                <div class="kpi-box">
+                  <span>Top xT</span>
+                  <strong id="kpi-top-xt">—</strong>
+                </div>
+                <div class="kpi-box">
+                  <span>Median VAEP</span>
+                  <strong id="kpi-median-vaep">—</strong>
+                </div>
+              </div>
+              <table id="player-valuation-table" class="data-table">
+                <thead>
+                  <tr>
+                    <th>Player</th>
+                    <th>Team</th>
+                    <th>Pos</th>
+                    <th>Min</th>
+                    <th>xG</th>
+                    <th>G</th>
+                    <th>xA</th>
+                    <th>A</th>
+                    <th>xT</th>
+                    <th>VAEP</th>
+                  </tr>
+                </thead>
+                <tbody></tbody>
+              </table>
+            </div>
+            <div class="panel__content-aside">
+              <div
+                id="chart-value-flow"
+                class="chart-shell"
+                role="img"
+                aria-label="Value flow map placeholder"
+              ></div>
+              <p class="panel__note">
+                Placeholder Sankey chart indicating pass and carry value flow.
+                Replace sample data with model outputs.
+              </p>
+            </div>
+          </div>
+        </article>
+
+        <!-- Panel 3 -->
+        <article
+          class="panel grid-stack-item c3"
+          id="panel-tactical-analysis"
+          data-panel="team-tactics"
+          data-gs-x="0"
+          data-gs-y="5"
+          data-gs-width="4"
+          data-gs-height="5"
+        >
+          <header class="panel__header">
+            <div>
+              <h2>Team Tactical Analysis</h2>
+              <p class="panel__subtitle">
+                Event Heatmap, Player Distribution Plot
+              </p>
+            </div>
+            <div class="panel__tools">
+              <select id="tactics-team-filter" class="tool-btn"></select>
+              <select id="tactics-event-filter" class="tool-btn">
+                <option value="passes">Passes</option>
+                <option value="shots">Shots</option>
+                <option value="defense">Defensive Actions</option>
+              </select>
+            </div>
+          </header>
+          <div class="panel__content">
+            <div
+              id="chart-event-heatmap"
+              class="chart-shell"
+              role="img"
+              aria-label="Event heatmap placeholder"
+            ></div>
+            <div
+              id="chart-player-distribution"
+              class="chart-shell"
+              role="img"
+              aria-label="Player distribution scatter placeholder"
+            ></div>
+            <details class="sql-block">
+              <summary>SQL template</summary>
+              <pre><code class="language-sql">SELECT event_id, team_id, player_id, x, y, event_type
+FROM fact_event_2024
+WHERE season = :season AND team_id = :team_id;</code></pre>
+            </details>
+          </div>
+        </article>
+
+        <!-- Panel 4 -->
+        <article
+          class="panel grid-stack-item c4"
+          id="panel-goalkeepers"
+          data-panel="goalkeepers"
+          data-gs-x="4"
+          data-gs-y="5"
+          data-gs-width="4"
+          data-gs-height="5"
+        >
+          <header class="panel__header">
+            <div>
+              <h2>Goalkeeper Performance Analysis</h2>
+              <p class="panel__subtitle">
+                Sources: agg_goalkeeper_match, fact_event_2024
+              </p>
+            </div>
+            <div class="panel__tools">
+              <select id="goalkeeper-team-filter" class="tool-btn"></select>
+              <button class="tool-btn" data-action="toggle-gk-metric">
+                Toggle Metric
+              </button>
+            </div>
+          </header>
+          <div class="panel__content">
+            <div class="kpi-group">
+              <div class="kpi-box">
+                <span>Best Save%</span>
+                <strong id="kpi-best-save">—</strong>
+              </div>
+              <div class="kpi-box">
+                <span>Clean Sheets</span>
+                <strong id="kpi-clean-sheets">—</strong>
+              </div>
+              <div class="kpi-box">
+                <span>Dist. Accuracy%</span>
+                <strong id="kpi-dist-acc">—</strong>
+              </div>
+            </div>
+            <div
+              id="chart-goalkeepers"
+              class="chart-shell"
+              role="img"
+              aria-label="Goalkeeper comparison placeholder"
+            ></div>
+            <table id="goalkeeper-table" class="data-table">
+              <thead>
+                <tr>
+                  <th>Goalkeeper</th>
+                  <th>Team</th>
+                  <th>Matches</th>
+                  <th>Saves</th>
+                  <th>Goals Conceded</th>
+                  <th>Save%</th>
+                  <th>Clean Sheets</th>
+                  <th>Dist Acc%</th>
+                </tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+          </div>
+        </article>
+
+        <!-- Panel 5 -->
+        <article
+          class="panel grid-stack-item c5"
+          id="panel-momentum"
+          data-panel="momentum"
+          data-gs-x="8"
+          data-gs-y="5"
+          data-gs-width="4"
+          data-gs-height="5"
+        >
+          <header class="panel__header">
+            <div>
+              <h2>Match Momentum &amp; Event Flow</h2>
+              <p class="panel__subtitle">
+                Event Sequence / Flow diagram placeholder
+              </p>
+            </div>
+            <div class="panel__tools">
+              <select id="momentum-match-filter" class="tool-btn"></select>
+              <button class="tool-btn" data-action="play-momentum">
+                Play Sequence
+              </button>
+            </div>
+          </header>
+          <div class="panel__content">
+            <div
+              id="chart-momentum"
+              class="chart-shell"
+              role="img"
+              aria-label="Match momentum line chart placeholder"
+            ></div>
+            <div
+              id="chart-event-flow"
+              class="chart-shell"
+              role="img"
+              aria-label="Event sequence / flow diagram placeholder"
+            ></div>
+            <table id="match-events-table" class="data-table">
+              <thead>
+                <tr>
+                  <th>Time</th>
+                  <th>Team</th>
+                  <th>Player</th>
+                  <th>Event</th>
+                  <th>Detail</th>
+                </tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+          </div>
+        </article>
+
+        <!-- Panel 6 -->
+        <article
+          class="panel grid-stack-item c6"
+          id="panel-player-style"
+          data-panel="player-style"
+          data-gs-x="0"
+          data-gs-y="10"
+          data-gs-width="6"
+          data-gs-height="5"
+        >
+          <header class="panel__header">
+            <div>
+              <h2>Player Style &amp; Role</h2>
+              <p class="panel__subtitle">
+                Radar chart + event heatmap placeholder
+              </p>
+            </div>
+            <div class="panel__tools">
+              <select id="player-style-filter" class="tool-btn"></select>
+              <button class="tool-btn" data-action="randomize-style">
+                Randomize
+              </button>
+            </div>
+          </header>
+          <div class="panel__content panel__content--split panel__content--stack">
+            <div class="panel__content-main">
+              <canvas
+                id="chart-player-radar"
+                class="chart-shell chart-shell--canvas"
+                aria-label="Player role radar placeholder"
+              ></canvas>
+              <p class="panel__note">
+                Placeholder radar chart comparing possession, creation, and
+                defensive metrics per 90.
+              </p>
+            </div>
+            <div class="panel__content-aside">
+              <div
+                id="chart-player-heatmap"
+                class="chart-shell"
+                role="img"
+                aria-label="Player touch heatmap placeholder"
+              ></div>
+              <p class="panel__note">
+                Replace random touches with event coordinates sourced from
+                fact_event_2024.
+              </p>
+            </div>
+          </div>
+        </article>
+      </section>
+    </main>
+
+    <aside class="chat" id="chatkit-panel" aria-label="Chat assistant">
+      <header class="chat__header">
+        <div class="chat__status"></div>
+        <h3>OpenAI ChatKit</h3>
+        <button class="chat__toggle" data-action="toggle-chat">Minimise</button>
+      </header>
+      <div class="chat__body" id="chat-body" role="log" aria-live="polite"></div>
+      <form class="chat__input" id="chat-form">
+        <label for="chat-message" class="sr-only">Send a message</label>
+        <input
+          id="chat-message"
+          name="message"
+          type="text"
+          placeholder="Ask about teams, players, or methodology…"
+        />
+        <button type="submit">Send</button>
+      </form>
+    </aside>
+  </body>
+</html>

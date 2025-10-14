@@ -2,6 +2,7 @@ import type { Metadata } from "next"
 import "./globals.css"
 import Link from "next/link"
 import Providers from '@/components/Providers'
+import { getWarehouseStats } from '@/lib/server/dbStats'
 import { getCurrentSession } from '@/lib/server/session'
 
 export const metadata: Metadata = {
@@ -16,6 +17,7 @@ export default async function RootLayout({
 }>) {
   const session = await getCurrentSession()
   const isPro = session?.user?.tier === 'PRO'
+  const stats = await getWarehouseStats()
 
   return (
     <html lang="en">
@@ -37,36 +39,46 @@ export default async function RootLayout({
                   </span>
                 ) : null}
               </Link>
-              <div className="flex items-center gap-1 text-xs">
-                <button className="px-3 py-1 bg-black text-white rounded font-medium shadow-sm">
-                  Data
-                </button>
-                <button className="px-3 py-1 hover:bg-gray-100 rounded">
-                  Research
-                </button>
-              </div>
-              <div className="ml-auto flex items-center gap-3">
-                <input
-                  type="text"
-                  placeholder="Search"
-                  className="px-3 py-1 border border-gray-300 rounded text-xs w-64 focus:outline-none focus:border-gray-400"
-                />
-                {session ? (
-                  <Link
-                    href="/account"
-                    className="px-3 py-1 border border-gray-300 rounded text-xs font-semibold hover:bg-gray-100"
-                  >
-                    Account
-                  </Link>
-                ) : (
-                  <Link
-                    href="/auth"
-                    className="px-3 py-1 bg-black text-white rounded text-xs font-semibold shadow-sm"
-                  >
-                    Log In
-                  </Link>
-                )}
-              </div>
+              {stats ? (
+                <div className="ml-auto flex flex-wrap items-center gap-4 text-[11px] text-gray-600">
+                  <span className="flex items-center gap-1">
+                    <span className="uppercase tracking-wide text-gray-500">Events</span>
+                    <span className="font-semibold text-gray-900">
+                      {stats.events.toLocaleString()}
+                    </span>
+                  </span>
+                  <span className="flex items-center gap-1">
+                    <span className="uppercase tracking-wide text-gray-500">Passes</span>
+                    <span className="font-semibold text-gray-900">
+                      {stats.passes.toLocaleString()}
+                    </span>
+                  </span>
+                  <span className="flex items-center gap-1">
+                    <span className="uppercase tracking-wide text-gray-500">Shots</span>
+                    <span className="font-semibold text-gray-900">
+                      {stats.shots.toLocaleString()}
+                    </span>
+                  </span>
+                  <span className="flex items-center gap-1">
+                    <span className="uppercase tracking-wide text-gray-500">Matches</span>
+                    <span className="font-semibold text-gray-900">
+                      {stats.matches.toLocaleString()}
+                    </span>
+                  </span>
+                  <span className="flex items-center gap-1">
+                    <span className="uppercase tracking-wide text-gray-500">Players</span>
+                    <span className="font-semibold text-gray-900">
+                      {stats.players.toLocaleString()}
+                    </span>
+                  </span>
+                  <span className="flex items-center gap-1">
+                    <span className="uppercase tracking-wide text-gray-500">Seasons</span>
+                    <span className="font-semibold text-gray-900">
+                      {stats.seasons.toLocaleString()}
+                    </span>
+                  </span>
+                </div>
+              ) : null}
             </div>
           </div>
         </nav>

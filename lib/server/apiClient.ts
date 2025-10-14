@@ -19,12 +19,8 @@ export interface AdminPanelDefinition {
 }
 
 const API_BASE_URL = process.env.NWSL_API_BASE_URL ?? 'http://127.0.0.1:8080';
-const API_KEY = process.env.NWSL_API_KEY;
+const API_KEY = process.env.NWSL_API_KEY ?? 'public_dev_dashboard_key';
 const PANEL_ADMIN_TOKEN = process.env.NWSL_PANEL_ADMIN_TOKEN;
-
-if (!API_KEY) {
-  throw new Error('NWSL_API_KEY is required on the server to reach the NWSL API.');
-}
 
 function buildHeaders(init?: HeadersInit): Headers {
   const headers = new Headers(init);
@@ -123,6 +119,280 @@ export async function executeQuery(
     },
     'Query execution failed'
   );
+}
+
+export interface DashboardSummaryResponse {
+  seasonYear: number;
+  headline: {
+    matches: number;
+    players: number;
+    teams: number;
+    events: number;
+  };
+  lastUpdated: string;
+}
+
+export interface TeamOverviewResponse {
+  seasonYear: number;
+  competition: string;
+  leagueAverages: {
+    goalsPerMatch: number | null;
+    shotsPerMatch: number | null;
+    passAccuracyPct: number | null;
+    homeWinPct: number | null;
+  };
+  teamTable: {
+    columns: string[];
+    rows: (string | number | null)[][];
+  };
+  barChart: {
+    series: Array<{
+      name: string;
+      data: Array<{ team: string; value: number }>;
+    }>;
+  };
+  teamFilter: {
+    selectedTeamId: string | null;
+    selectedTeamName: string;
+    availableTeams: Array<{ teamId: string; teamName: string }>;
+  };
+}
+
+export interface PlayerValuationResponse {
+  seasonYear: number;
+  competition: string;
+  teamFilter: {
+    selectedTeamId: string | null;
+    availableTeams: Array<{ teamId: string; teamName: string }>;
+  };
+  filters: {
+    minMinutes: number;
+    limit: number;
+    orderBy: 'vaep' | 'xt';
+  };
+  headline: {
+    topXg: null | { playerId: string; playerName: string; teamName: string; value: number | null };
+    topXt: null | { playerId: string; playerName: string; teamName: string; value: number | null };
+    medianVaep: number | null;
+  };
+  players: Array<{
+    playerId: string;
+    playerName: string;
+    teamId: string;
+    teamName: string;
+    minutes: number;
+    matches: number;
+    goals: number;
+    assists: number;
+    shots: number;
+    shotAccuracy: number | null;
+    xg: number | null;
+    xa: number | null;
+    xt: number | null;
+    vaepTotal: number | null;
+    vaepOffensive: number | null;
+    vaepDefensive: number | null;
+  }>;
+  valueFlow: {
+    nodes: Array<{ id: string; label: string; type: 'team' | 'player'; teamId?: string }>;
+    links: Array<{
+      source: string;
+      target: string;
+      weight: number;
+      vaep: number | null;
+      offensiveVaep: number | null;
+      defensiveVaep: number | null;
+    }>;
+  };
+}
+
+export interface GoalkeeperDashboardResponse {
+  seasonYear: number;
+  competition: string;
+  teamFilter: {
+    selectedTeamId: string | null;
+    availableTeams: Array<{ teamId: string; teamName: string }>;
+  };
+  headline: {
+    bestSavePct: null | { playerId: string; playerName: string; teamName: string; value: number | null };
+    cleanSheetsLeader: null | { playerId: string; playerName: string; teamName: string; value: number | null };
+    distributionLeader: null | { playerId: string; playerName: string; teamName: string; value: number | null };
+  };
+  goalkeepers: {
+    columns: string[];
+    rows: Array<{
+      playerId: string;
+      playerName: string;
+      teamName: string;
+      matches: number;
+      saves: number;
+      goalsConceded: number;
+      savePct: number;
+      cleanSheets: number;
+      psxg?: number | null;
+      psxgPlusMinus?: number | null;
+      distributionAccuracy: number | null;
+      savesPer90?: number | null;
+      goalsConcededPer90?: number | null;
+    }>;
+  };
+}
+
+export interface MomentumResponse {
+  match: {
+    matchId: string;
+    matchDate: string | null;
+    seasonYear: number;
+    competition: string;
+    homeTeam: string;
+    awayTeam: string;
+    homeScore: number;
+    awayScore: number;
+  };
+  momentum: {
+    metric: string;
+    window: number;
+    series: Array<{
+      team: string;
+      teamId: string;
+      points: Array<{ minute: number; value: number }>;
+    }>;
+  };
+  events: Array<{
+    minute: number;
+    team: string | null;
+    teamId?: string;
+    player: string | null;
+    event: string;
+    detail: string | null;
+  }>;
+  valueFlow: {
+    nodes: Array<{ id: string; label: string; clusterId?: number; clusterVersion?: string; type?: string }>;
+    links: Array<{ source: string; target: string; weight: number; teamId?: string }>;
+  };
+}
+
+export interface DashboardLookupsResponse {
+  seasons: number[];
+  teams: Array<{ teamId: string; teamName: string }>;
+  goalkeepers: Array<{ playerId: string; playerName: string; teamId: string; teamName: string }>;
+  matches: Array<{ matchId: string; matchDate: string | null; label: string }>;
+  players: Array<{ playerId: string; playerName: string; teamName: string }>;
+}
+
+export interface PlayerStylePrototype {
+  prototypeId: number;
+  actionType: string;
+  stage: number;
+  weight: number | null;
+  share: number;
+  alpha: number | null;
+}
+
+export interface PlayerStyleResponse {
+  player: {
+    playerId: string;
+    playerName: string;
+    teamId: string;
+    teamName: string;
+    seasonYear: number;
+    competition: string;
+    matchesPlayed: number;
+    minutesPlayed: number;
+  };
+  radar: {
+    metrics: Array<{ label: string; value: number | null; percentile: number }>;
+    scale: string;
+  };
+  styleVector: null | {
+    styleVector: unknown;
+    passVector: unknown;
+    crossVector: unknown;
+    dribbleVector: unknown;
+    shotVector: unknown;
+  };
+  stylePrototypes: PlayerStylePrototype[];
+  heatmap: {
+    imageUrl: string | null;
+    data: unknown;
+  };
+  vaep: {
+    total: number | null;
+    offensive: number | null;
+    defensive: number | null;
+  };
+}
+
+function buildQuery(params: Record<string, string | number | undefined>): string {
+  const search = new URLSearchParams();
+  Object.entries(params).forEach(([key, value]) => {
+    if (value !== undefined && value !== null) {
+      search.set(key, String(value));
+    }
+  });
+  const qs = search.toString();
+  return qs ? `?${qs}` : '';
+}
+
+export async function fetchDashboardSummary(season?: number) {
+  const qs = buildQuery({ season });
+  return backendFetch<DashboardSummaryResponse>(`/dashboard/summary${qs}`, undefined, 'Failed to load dashboard summary');
+}
+
+export async function fetchTeamOverview(params: { season?: number; competition?: string }) {
+  const qs = buildQuery({ season: params.season, competition: params.competition });
+  return backendFetch<TeamOverviewResponse>(`/dashboard/team-overview${qs}`, undefined, 'Failed to load team overview');
+}
+
+export async function fetchPlayerValuation(params: {
+  season?: number;
+  competition?: string;
+  teamId?: string | null;
+  minMinutes?: number;
+  limit?: number;
+  orderBy?: 'vaep' | 'xt';
+}) {
+  const qs = buildQuery({
+    season: params.season,
+    competition: params.competition,
+    teamId: params.teamId ?? undefined,
+    minMinutes: params.minMinutes,
+    limit: params.limit,
+    orderBy: params.orderBy,
+  });
+  return backendFetch<PlayerValuationResponse>(`/dashboard/player-valuation${qs}`, undefined, 'Failed to load player valuation');
+}
+
+export async function fetchGoalkeeperDashboard(params: { season?: number; competition?: string; teamId?: string | null }) {
+  const qs = buildQuery({
+    season: params.season,
+    competition: params.competition,
+    teamId: params.teamId ?? undefined,
+  });
+  return backendFetch<GoalkeeperDashboardResponse>(`/dashboard/goalkeepers${qs}`, undefined, 'Failed to load goalkeeper dashboard');
+}
+
+export async function fetchMomentum(matchId: string) {
+  const qs = buildQuery({ matchId });
+  return backendFetch<MomentumResponse>(`/dashboard/momentum${qs}`, undefined, 'Failed to load match momentum');
+}
+
+export async function fetchDashboardLookups() {
+  return backendFetch<DashboardLookupsResponse>(
+    '/dashboard/lookups',
+    undefined,
+    'Failed to load dashboard lookups'
+  );
+}
+
+export async function fetchPlayerStyle(params: { season?: number; competition?: string; playerId?: string; playerName?: string }) {
+  const qs = buildQuery({
+    season: params.season,
+    competition: params.competition,
+    playerId: params.playerId,
+    playerName: params.playerName,
+  });
+  return backendFetch<PlayerStyleResponse>(`/dashboard/player-style${qs}`, undefined, 'Failed to load player style');
 }
 
 export async function fetchHealth() {
