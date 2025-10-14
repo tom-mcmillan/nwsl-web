@@ -47,7 +47,7 @@ export default async function RootLayout({
                   </span>
                 ) : null}
               </Link>
-              <div className="ml-auto flex flex-wrap items-center gap-4 text-[11px] text-gray-700 uppercase tracking-wide">
+              <div className="flex flex-wrap items-center gap-4 text-[11px] text-gray-700 uppercase tracking-wide">
                 {statLineItems.map(({ label, value }) => (
                   <span key={label} className="flex items-center gap-1.5">
                     <span className="text-gray-500">{label}</span>
