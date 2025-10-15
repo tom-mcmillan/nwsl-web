@@ -15,7 +15,13 @@ import {
   Select,
   SelectChangeEvent,
   Typography,
-  Divider
+  Divider,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow
 } from '@mui/material';
 
 import { DataPanel } from '@/components/DataPanel';
@@ -25,7 +31,6 @@ import { useDashboardLookups } from '@/hooks/useDashboardLookups';
 import { usePlayerValuation } from '@/hooks/usePlayerValuation';
 import { useMomentum } from '@/hooks/useMomentum';
 import { usePlayerStyle } from '@/hooks/usePlayerStyle';
-import { useShotMap } from '@/hooks/useShotMap';
 
 const competitionOptions = [
   { value: 'regular_season', label: 'Regular Season' },
@@ -117,6 +122,133 @@ function EmptyState({ message }: { message: string }) {
   );
 }
 
+type StandingsRow = {
+  team: string;
+  teamId?: string | null;
+  matches: number;
+  wins: number;
+  draws: number;
+  losses: number;
+  goalsFor: number;
+  goalsAgainst: number;
+  goalDiff: number;
+  points: number;
+  pointsPerGame: number | null;
+  shotAccuracy: number | null;
+  passAccuracy: number | null;
+};
+
+function LeagueStandingsTable({
+  rows,
+  loading,
+  selectedTeamId,
+  onSelectTeam,
+}: {
+  rows: StandingsRow[];
+  loading: boolean;
+  selectedTeamId: string | null;
+  onSelectTeam?: (teamId: string | null) => void;
+}) {
+  if (loading) {
+    return <LoadingState />;
+  }
+
+  if (!rows.length) {
+    return <EmptyState message="Standings unavailable for the selected filters." />;
+  }
+
+  const maxPpg = rows.reduce((max, r) => Math.max(max, r.pointsPerGame ?? 0), 0);
+
+  return (
+    <TableContainer
+      sx={{
+        maxHeight: 420,
+        border: '1px solid #d7dbe3',
+        borderRadius: 1,
+        boxShadow: '0 1px 0 rgba(15,23,42,0.08)',
+        backgroundColor: '#fff',
+      }}
+    >
+      <Table
+        stickyHeader
+        size="small"
+        aria-label="League standings"
+        sx={{
+          '& .MuiTableRow-root': { height: 32 },
+          '& thead th': {
+            fontSize: '0.68rem',
+            fontWeight: 600,
+            color: '#4b5563',
+            letterSpacing: 0.2,
+            borderBottom: '1px solid #d7dbe3',
+            backgroundColor: '#f8f9fb',
+          },
+          '& tbody td': {
+            fontSize: '0.7rem',
+            borderBottom: '1px solid #edf0f5',
+            color: '#1f2937',
+          },
+        }}
+      >
+        <TableHead>
+          <TableRow>
+            <TableCell>Team</TableCell>
+            <TableCell align="right">MP</TableCell>
+            <TableCell align="right">PTS</TableCell>
+            <TableCell align="right">GD</TableCell>
+            <TableCell align="right">PPG</TableCell>
+            <TableCell align="right">Shot%</TableCell>
+            <TableCell align="right">Pass%</TableCell>
+            <TableCell align="right">Record</TableCell>
+          </TableRow>
+        </TableHead>
+        <TableBody>
+          {rows.map((row, index) => {
+            const isSelected = Boolean(row.teamId && row.teamId === selectedTeamId);
+            const ppgPercent = maxPpg > 0 && row.pointsPerGame ? Math.min(row.pointsPerGame / maxPpg, 1) : 0;
+            const bandColor = index < 4 ? '#2451b2' : index >= rows.length - 2 ? '#dc2626' : 'transparent';
+
+            return (
+              <TableRow
+                key={row.team}
+                hover
+                onClick={onSelectTeam ? () => onSelectTeam(row.teamId ?? null) : undefined}
+                sx={{
+                  cursor: onSelectTeam ? 'pointer' : 'default',
+                  backgroundColor: isSelected ? 'rgba(36,81,178,0.12)' : index % 2 ? '#f5f6f8' : '#fff',
+                  borderLeft: `2px solid ${bandColor}` ,
+                }}
+              >
+                <TableCell sx={{ fontWeight: 600 }}>{row.team}</TableCell>
+                <TableCell align="right" sx={{ color: '#4b5563' }}>{formatNumber(row.matches)}</TableCell>
+                <TableCell align="right" sx={{ fontWeight: 600 }}>{formatNumber(row.points)}</TableCell>
+                <TableCell align="right" sx={{ color: row.goalDiff >= 0 ? '#2563eb' : '#dc2626' }}>{formatNumber(row.goalDiff)}</TableCell>
+                <TableCell align="right">
+                  <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 0.5 }}>
+                    <Box sx={{ width: 48, height: 4, borderRadius: 999, backgroundColor: '#e2e8f0', overflow: 'hidden' }}>
+                      <Box sx={{ width: `${ppgPercent * 100}%`, height: '100%', backgroundColor: '#2563eb' }} />
+                    </Box>
+                    <Typography component="span" sx={{ fontWeight: 600 }}>{row.pointsPerGame === null ? '—' : formatNumber(row.pointsPerGame, { maximumFractionDigits: 2 })}</Typography>
+                  </Box>
+                </TableCell>
+                <TableCell align="right">
+                  {row.shotAccuracy === null ? '—' : `${formatNumber(row.shotAccuracy, { maximumFractionDigits: 1 })}%`}
+                </TableCell>
+                <TableCell align="right">
+                  {row.passAccuracy === null ? '—' : `${formatNumber(row.passAccuracy, { maximumFractionDigits: 1 })}%`}
+                </TableCell>
+                <TableCell align="right" sx={{ color: '#6b7280' }}>
+                  {row.wins}-{row.draws}-{row.losses}
+                </TableCell>
+              </TableRow>
+            );
+          })}
+        </TableBody>
+      </Table>
+    </TableContainer>
+  );
+}
+
 const formatNumber = (value?: number | null, options: Intl.NumberFormatOptions = {}) => {
   if (value === null || value === undefined || Number.isNaN(value)) {
     return '—';
@@ -161,15 +293,6 @@ export default function Home() {
   } = usePlayerValuation({ season: currentSeason, competition, teamId, minMinutes: 600, limit: 25, orderBy: 'vaep' });
   const { data: momentumData, isLoading: momentumLoading } = useMomentum(matchId);
   const { data: playerStyleData, isLoading: playerStyleLoading } = usePlayerStyle({ season: currentSeason, competition, playerId: selectedPlayerId });
-  const shotMapTeamName = useMemo(() => {
-    if (teamId && lookups?.teams) {
-      return lookups.teams.find((team) => team.teamId === teamId)?.teamName;
-    }
-    const firstRow = teamOverviewData?.teamTable.rows?.[0];
-    return Array.isArray(firstRow) && typeof firstRow[0] === 'string' ? firstRow[0] : undefined;
-  }, [teamId, lookups, teamOverviewData?.teamTable]);
-  const { data: shotMapData, isLoading: shotMapLoading } = useShotMap({ teamName: shotMapTeamName, season: currentSeason });
-
   useEffect(() => {
     if (playerValuationData?.players?.length) {
       const exists = playerValuationData.players.some((player) => player.playerId === selectedPlayerId);
@@ -181,18 +304,59 @@ export default function Home() {
     }
   }, [playerValuationData, selectedPlayerId]);
 
-  const teamTableRows = useMemo(() => {
+
+  const standingsRows = useMemo<StandingsRow[]>(() => {
     const table = teamOverviewData?.teamTable;
-    if (!table) return [];
-    const columns = table.columns;
-    return table.rows.map((row, index) => {
-      const entry: Record<string, unknown> = { id: `${row[0]}-${index}` };
-      columns.forEach((col, idx) => {
-        entry[col] = row[idx];
+    if (!table?.rows?.length) return [];
+    const lookupTeams = lookups?.teams ?? [];
+
+    return table.rows
+      .map((row) => {
+        const [teamName, mp, w, d, l, gf, ga, gd, ppg, shotAcc, passAcc] = row as (
+          | string
+          | number
+          | null
+        )[];
+
+        const wins = Number(w ?? 0);
+        const draws = Number(d ?? 0);
+        const losses = Number(l ?? 0);
+        const matches = Number(mp ?? wins + draws + losses);
+        const goalsFor = Number(gf ?? 0);
+        const goalsAgainst = Number(ga ?? 0);
+        const goalDiff = Number(gd ?? goalsFor - goalsAgainst);
+        const points = wins * 3 + draws;
+        const pointsPerGame = typeof ppg === 'number' ? ppg : matches > 0 ? points / matches : null;
+        const shotAccuracy = typeof shotAcc === 'number' ? shotAcc : null;
+        const passAccuracy = typeof passAcc === 'number' ? passAcc : null;
+
+        const teamMeta = lookupTeams.find((team) => team.teamName === teamName);
+        const teamId = teamMeta?.teamId ?? null;
+        const shortLabel = teamMeta?.shortName ?? teamMeta?.teamName ?? teamName;
+
+        return {
+          team: String(shortLabel ?? 'Unknown'),
+          teamId,
+          matches,
+          wins,
+          draws,
+          losses,
+          goalsFor,
+          goalsAgainst,
+          goalDiff,
+          points,
+          pointsPerGame,
+          shotAccuracy,
+          passAccuracy,
+        };
+      })
+      .sort((a, b) => {
+        if (b.points !== a.points) return b.points - a.points;
+        if (b.goalDiff !== a.goalDiff) return b.goalDiff - a.goalDiff;
+        return b.goalsFor - a.goalsFor;
       });
-      return entry;
-    });
-  }, [teamOverviewData?.teamTable]);
+  }, [teamOverviewData?.teamTable, lookups?.teams]);
+
 
   const playerValuationRows = useMemo(() => {
     if (!playerValuationData) return [];
@@ -224,36 +388,6 @@ export default function Home() {
     }));
   }, [momentumData]);
 
-
-  const leagueAverageCards = useMemo(() => {
-    const averages = teamOverviewData?.leagueAverages;
-    if (!averages) return [];
-    return [
-      { label: 'Goals per Match', value: formatNumber(averages.goalsPerMatch, { maximumFractionDigits: 2 }) },
-      { label: 'Shots per Match', value: formatNumber(averages.shotsPerMatch, { maximumFractionDigits: 2 }) },
-      { label: 'Pass Accuracy %', value: formatNumber(averages.passAccuracyPct, { maximumFractionDigits: 1 }) },
-      { label: 'Home Win %', value: formatNumber(averages.homeWinPct, { maximumFractionDigits: 1 }) },
-    ];
-  }, [teamOverviewData?.leagueAverages]);
-
-  const shotMapMetricCards = useMemo(() => {
-    if (!shotMapData?.metrics) return [];
-    const metrics = shotMapData.metrics;
-    return [
-      metrics.total_shots !== undefined
-        ? { label: 'Total Shots', value: formatNumber(metrics.total_shots) }
-        : null,
-      metrics.goals !== undefined
-        ? { label: 'Goals', value: formatNumber(metrics.goals) }
-        : null,
-      metrics.conversion_rate !== undefined
-        ? {
-            label: 'Conversion %',
-            value: `${formatNumber(metrics.conversion_rate, { maximumFractionDigits: 1 })}%`,
-          }
-        : null,
-    ].filter(Boolean) as Array<{ label: string; value: string }>;
-  }, [shotMapData]);
 
   const competitionLabel = competitionOptions.find((opt) => opt.value === competition)?.label ?? 'Regular Season';
 
@@ -366,11 +500,6 @@ export default function Home() {
     },
   });
 
-  const handleTeamChange = (event: SelectChangeEvent<string>) => {
-    const value = event.target.value;
-    setTeamId(value === 'all' ? null : value);
-  };
-
   const handlePlayerChange = (event: SelectChangeEvent<string>) => {
     const value = event.target.value;
     setSelectedPlayerId(value || undefined);
@@ -381,70 +510,16 @@ export default function Home() {
       <Panel minSize={45} defaultSize={70}>
         <PanelGroup direction="vertical" className="flex h-full w-full" autoSaveId="nwsl-dashboard-left">
           <Panel defaultSize={60} minSize={35}>
-            <PanelSection title="Team Overview" subtitle={`${competitionLabel}${season ? ` • ${season}` : ''}`}>
-              <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1.5, alignItems: 'center', mb: 1.5 }}>
-                <FormControl size="small" sx={{ minWidth: 160 }}>
-                  <InputLabel id="team-select-label">Team</InputLabel>
-                  <Select
-                    labelId="team-select-label"
-                    value={teamId ?? 'all'}
-                    label="Team"
-                    onChange={handleTeamChange}
-                  >
-                    <MenuItem value="all">All Teams</MenuItem>
-                    {(lookups?.teams ?? []).map((team) => (
-                      <MenuItem value={team.teamId} key={team.teamId}>
-                        {team.teamName}
-                      </MenuItem>
-                    ))}
-                  </Select>
-                </FormControl>
-              </Box>
+            <PanelSection title="League Standings" subtitle={`${competitionLabel}${season ? ` • ${season}` : ''}`}>
               {teamOverviewLoading ? (
                 <LoadingState />
-              ) : teamTableRows.length ? (
-                <>
-                  <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: 1.5, mb: 1.5 }}>
-                    {leagueAverageCards.map((metric) => (
-                      <MetricCard key={metric.label} label={metric.label} value={metric.value} />
-                    ))}
-                  </Box>
-                  {shotMapTeamName ? (
-                    <Box sx={{ display: 'flex', gap: 1.5, flexWrap: 'wrap', mb: 1.5 }}>
-                      <Paper
-                        variant="outlined"
-                        sx={{ flex: 1, minWidth: 260, position: 'relative', minHeight: 220, overflow: 'hidden' }}
-                      >
-                        {shotMapLoading ? (
-                          <LoadingState />
-                        ) : shotMapData ? (
-                          <Image
-                            src={shotMapData.imageUrl}
-                            alt={`${shotMapTeamName} shot map`}
-                            fill
-                            style={{ objectFit: 'cover' }}
-                            sizes="(max-width: 768px) 100vw, 33vw"
-                          />
-                        ) : (
-                          <EmptyState message="Unable to load shot map." />
-                        )}
-                      </Paper>
-                      <Box sx={{ flex: 1, minWidth: 220, display: 'flex', flexDirection: 'column', gap: 1.5 }}>
-                        {shotMapMetricCards.length ? (
-                          <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: 1 }}>
-                            {shotMapMetricCards.map((metric) => (
-                              <MetricCard key={metric.label} label={metric.label} value={metric.value} />
-                            ))}
-                          </Box>
-                        ) : null}
-                        <Typography variant="body2" color="text.secondary">
-                          Live shot map for {shotMapTeamName}. Metrics update with filters and can be refreshed on demand.
-                        </Typography>
-                      </Box>
-                    </Box>
-                  ) : null}
-                  <DataPanel heading="League Table" data={teamTableRows} height="100%" searchable />
-                </>
+              ) : standingsRows.length ? (
+                <LeagueStandingsTable
+                  rows={standingsRows}
+                  loading={teamOverviewLoading}
+                  selectedTeamId={teamId}
+                  onSelectTeam={(id) => setTeamId(id)}
+                />
               ) : (
                 <EmptyState message="No team overview data available for the selected filters." />
               )}
