@@ -304,6 +304,7 @@ export default function Home() {
     }
   }, [playerValuationData, selectedPlayerId]);
 
+
   const standingsRows = useMemo<StandingsRow[]>(() => {
     const table = teamOverviewData?.teamTable;
     if (!table?.rows?.length) return [];
@@ -328,13 +329,13 @@ export default function Home() {
         const pointsPerGame = typeof ppg === 'number' ? ppg : matches > 0 ? points / matches : null;
         const shotAccuracy = typeof shotAcc === 'number' ? shotAcc : null;
         const passAccuracy = typeof passAcc === 'number' ? passAcc : null;
-        const teamId =
-          lookupTeams.find((t) => t.teamName === teamName)?.teamId ??
-          lookupTeams.find((t) => t.teamName.toLowerCase() === String(teamName ?? '').toLowerCase())?.teamId ??
-          null;
+
+        const teamMeta = lookupTeams.find((team) => team.teamName === teamName);
+        const teamId = teamMeta?.teamId ?? null;
+        const shortLabel = teamMeta?.shortName ?? teamMeta?.teamName ?? teamName;
 
         return {
-          team: String(teamName ?? 'Unknown'),
+          team: String(shortLabel ?? 'Unknown'),
           teamId,
           matches,
           wins,
@@ -355,6 +356,7 @@ export default function Home() {
         return b.goalsFor - a.goalsFor;
       });
   }, [teamOverviewData?.teamTable, lookups?.teams]);
+
 
   const playerValuationRows = useMemo(() => {
     if (!playerValuationData) return [];
