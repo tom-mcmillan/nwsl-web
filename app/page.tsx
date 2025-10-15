@@ -160,11 +160,10 @@ function LeagueStandingsTable({
   const maxPpg = rows.reduce((max, r) => Math.max(max, r.pointsPerGame ?? 0), 0);
 
   return (
-    <TableContainer sx={{ maxHeight: 460 }}>
+    <TableContainer sx={{ maxHeight: 460, border: '1px solid #d1d5db', borderRadius: 2, boxShadow: '0 1px 0 rgba(15,23,42,0.08), 0 6px 18px rgba(15,23,42,0.06)', backgroundColor: '#ffffff' }}>
       <Table stickyHeader size="small" aria-label="League standings" sx={{ '& .MuiTableRow-root': { height: 40 } }}>
         <TableHead>
           <TableRow sx={{ '& th': { fontSize: '0.72rem', fontWeight: 700, color: '#1f2937', borderBottom: '1px solid #d1d5db' } }}>
-            <TableCell sx={{ width: 32, color: '#9ca3af' }}>#</TableCell>
             <TableCell sx={{ textTransform: 'uppercase', letterSpacing: 0.4 }}>Team</TableCell>
             <TableCell align="right" sx={{ color: '#9ca3af' }}>Record</TableCell>
             <TableCell align="right" sx={{ color: '#9ca3af' }}>MP</TableCell>
@@ -202,7 +201,6 @@ function LeagueStandingsTable({
                   '&:last-of-type': { borderBottom: '1px solid #d1d5db' },
                 }}
               >
-                <TableCell sx={{ fontWeight: 700, color: '#9ca3af' }}>{index + 1}</TableCell>
                 <TableCell sx={{ fontWeight: 800, color: '#111827' }}>{row.team}</TableCell>
                 <TableCell align="right" sx={{ fontSize: '0.72rem', fontWeight: 600, color: '#6b7280' }}>
                   {recordLabel}
@@ -541,11 +539,6 @@ export default function Home() {
     },
   });
 
-  const handleTeamChange = (event: SelectChangeEvent<string>) => {
-    const value = event.target.value;
-    setTeamId(value === 'all' ? null : value);
-  };
-
   const handlePlayerChange = (event: SelectChangeEvent<string>) => {
     const value = event.target.value;
     setSelectedPlayerId(value || undefined);
@@ -557,24 +550,6 @@ export default function Home() {
         <PanelGroup direction="vertical" className="flex h-full w-full" autoSaveId="nwsl-dashboard-left">
           <Panel defaultSize={60} minSize={35}>
             <PanelSection title="League Standings" subtitle={`${competitionLabel}${season ? ` • ${season}` : ''}`}>
-              <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1.5, alignItems: 'center', mb: 1.5 }}>
-                <FormControl size="small" sx={{ minWidth: 160 }}>
-                  <InputLabel id="team-select-label">Team</InputLabel>
-                  <Select
-                    labelId="team-select-label"
-                    value={teamId ?? 'all'}
-                    label="Team"
-                    onChange={handleTeamChange}
-                  >
-                    <MenuItem value="all">All Teams</MenuItem>
-                    {(lookups?.teams ?? []).map((team) => (
-                      <MenuItem value={team.teamId} key={team.teamId}>
-                        {team.teamName}
-                      </MenuItem>
-                    ))}
-                  </Select>
-                </FormControl>
-              </Box>
               {teamOverviewLoading ? (
                 <LoadingState />
               ) : standingsRows.length ? (
