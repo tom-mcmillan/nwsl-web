@@ -31,7 +31,6 @@ import { useDashboardLookups } from '@/hooks/useDashboardLookups';
 import { usePlayerValuation } from '@/hooks/usePlayerValuation';
 import { useMomentum } from '@/hooks/useMomentum';
 import { usePlayerStyle } from '@/hooks/usePlayerStyle';
-import { useShotMap } from '@/hooks/useShotMap';
 
 const competitionOptions = [
   { value: 'regular_season', label: 'Regular Season' },
@@ -158,6 +157,8 @@ function LeagueStandingsTable({
     return <EmptyState message="Standings unavailable for the selected filters." />;
   }
 
+  const maxPpg = rows.reduce((max, r) => Math.max(max, r.pointsPerGame ?? 0), 0);
+
   return (
     <TableContainer sx={{ maxHeight: 460 }}>
       <Table stickyHeader size="small" aria-label="League standings">
@@ -165,6 +166,7 @@ function LeagueStandingsTable({
           <TableRow>
             <TableCell sx={{ width: '32px' }}>#</TableCell>
             <TableCell>Team</TableCell>
+            <TableCell align="right">Record</TableCell>
             <TableCell align="right">MP</TableCell>
             <TableCell align="right">PTS</TableCell>
             <TableCell align="right">GD</TableCell>
@@ -175,12 +177,16 @@ function LeagueStandingsTable({
         </TableHead>
         <TableBody>
           {rows.map((row, index) => {
+            const recordLabel = `${row.wins}-${row.draws}-${row.losses}`;
             const isSelected = Boolean(row.teamId && row.teamId === selectedTeamId);
             const handleClick = () => {
               if (onSelectTeam) {
                 onSelectTeam(row.teamId ?? null);
               }
             };
+            const isTopFour = index < 4;
+            const isBottomTwo = index >= rows.length - 2;
+            const ppgPercent = maxPpg > 0 && row.pointsPerGame ? Math.min(row.pointsPerGame / maxPpg, 1) : 0;
             return (
               <TableRow
                 key={row.team}
@@ -188,26 +194,88 @@ function LeagueStandingsTable({
                 onClick={onSelectTeam ? handleClick : undefined}
                 sx={{
                   cursor: onSelectTeam ? 'pointer' : 'default',
-                  backgroundColor: isSelected ? 'rgba(59,130,246,0.08)' : undefined,
+                  backgroundColor: isSelected ? 'rgba(59,130,246,0.08)' : isBottomTwo ? 'rgba(239,68,68,0.05)' : undefined,
+                  borderLeft: isTopFour ? '3px solid #0b75ff' : isBottomTwo ? '3px solid #ef4444' : '3px solid transparent',
                 }}
               >
                 <TableCell sx={{ fontWeight: 600 }}>{index + 1}</TableCell>
-                <TableCell sx={{ fontWeight: 600 }}>{row.team}</TableCell>
+                <TableCell sx={{ fontWeight: 700 }}>{row.team}</TableCell>
+                <TableCell align="right" sx={{ fontSize: '0.75rem', color: 'text.secondary', fontWeight: 600 }}>
+                  {recordLabel}
+                </TableCell>
                 <TableCell align="right">{formatNumber(row.matches)}</TableCell>
-                <TableCell align="right">{formatNumber(row.points)}</TableCell>
+                <TableCell align="right" sx={{ fontWeight: 800, fontSize: '1rem', color: '#111827' }}>
+                  {formatNumber(row.points)}
+                </TableCell>
                 <TableCell align="right">{formatNumber(row.goalDiff)}</TableCell>
                 <TableCell align="right">
-                  {row.pointsPerGame === null ? '—' : formatNumber(row.pointsPerGame, { maximumFractionDigits: 2 })}
+                  <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 1 }}>
+                    <Box
+                      sx={{
+                        position: 'relative',
+                        width: 64,
+                        height: 6,
+                        borderRadius: 999,
+                        backgroundColor: 'rgba(11,117,255,0.12)',
+                        overflow: 'hidden',
+                      }}
+                    >
+                      <Box
+                        sx={{
+                          position: 'absolute',
+                          top: 0,
+                          left: 0,
+                          bottom: 0,
+                          width: `${ppgPercent * 100}%`,
+                          borderRadius: 999,
+                          backgroundColor: '#0b75ff',
+                        }}
+                      />
+                    </Box>
+                    <Typography component="span" sx={{ fontSize: '0.8rem', fontWeight: 600 }}>
+                      {row.pointsPerGame === null ? '—' : formatNumber(row.pointsPerGame, { maximumFractionDigits: 2 })}
+                    </Typography>
+                  </Box>
                 </TableCell>
                 <TableCell align="right">
-                  {row.shotAccuracy === null
-                    ? '—'
-                    : `${formatNumber(row.shotAccuracy, { maximumFractionDigits: 1 })}%`}
+                  {row.shotAccuracy === null ? (
+                    '—'
+                  ) : (
+                    <Box
+                      component="span"
+                      sx={{
+                        px: 1,
+                        py: 0.25,
+                        borderRadius: 999,
+                        fontSize: '0.75rem',
+                        fontWeight: 600,
+                        color: '#0b75ff',
+                        backgroundColor: 'rgba(11,117,255,0.15)',
+                      }}
+                    >
+                      {formatNumber(row.shotAccuracy, { maximumFractionDigits: 1 })}%
+                    </Box>
+                  )}
                 </TableCell>
                 <TableCell align="right">
-                  {row.passAccuracy === null
-                    ? '—'
-                    : `${formatNumber(row.passAccuracy, { maximumFractionDigits: 1 })}%`}
+                  {row.passAccuracy === null ? (
+                    '—'
+                  ) : (
+                    <Box
+                      component="span"
+                      sx={{
+                        px: 1,
+                        py: 0.25,
+                        borderRadius: 999,
+                        fontSize: '0.75rem',
+                        fontWeight: 600,
+                        color: '#10b981',
+                        backgroundColor: 'rgba(16,185,129,0.15)',
+                      }}
+                    >
+                      {formatNumber(row.passAccuracy, { maximumFractionDigits: 1 })}%
+                    </Box>
+                  )}
                 </TableCell>
               </TableRow>
             );
@@ -262,15 +330,6 @@ export default function Home() {
   } = usePlayerValuation({ season: currentSeason, competition, teamId, minMinutes: 600, limit: 25, orderBy: 'vaep' });
   const { data: momentumData, isLoading: momentumLoading } = useMomentum(matchId);
   const { data: playerStyleData, isLoading: playerStyleLoading } = usePlayerStyle({ season: currentSeason, competition, playerId: selectedPlayerId });
-  const shotMapTeamName = useMemo(() => {
-    if (teamId && lookups?.teams) {
-      return lookups.teams.find((team) => team.teamId === teamId)?.teamName;
-    }
-    const firstRow = teamOverviewData?.teamTable.rows?.[0];
-    return Array.isArray(firstRow) && typeof firstRow[0] === 'string' ? firstRow[0] : undefined;
-  }, [teamId, lookups, teamOverviewData?.teamTable]);
-  const { data: shotMapData, isLoading: shotMapLoading } = useShotMap({ teamName: shotMapTeamName, season: currentSeason });
-
   useEffect(() => {
     if (playerValuationData?.players?.length) {
       const exists = playerValuationData.players.some((player) => player.playerId === selectedPlayerId);
@@ -364,36 +423,6 @@ export default function Home() {
     }));
   }, [momentumData]);
 
-
-  const leagueAverageCards = useMemo(() => {
-    const averages = teamOverviewData?.leagueAverages;
-    if (!averages) return [];
-    return [
-      { label: 'Goals per Match', value: formatNumber(averages.goalsPerMatch, { maximumFractionDigits: 2 }) },
-      { label: 'Shots per Match', value: formatNumber(averages.shotsPerMatch, { maximumFractionDigits: 2 }) },
-      { label: 'Pass Accuracy %', value: formatNumber(averages.passAccuracyPct, { maximumFractionDigits: 1 }) },
-      { label: 'Home Win %', value: formatNumber(averages.homeWinPct, { maximumFractionDigits: 1 }) },
-    ];
-  }, [teamOverviewData?.leagueAverages]);
-
-  const shotMapMetricCards = useMemo(() => {
-    if (!shotMapData?.metrics) return [];
-    const metrics = shotMapData.metrics;
-    return [
-      metrics.total_shots !== undefined
-        ? { label: 'Total Shots', value: formatNumber(metrics.total_shots) }
-        : null,
-      metrics.goals !== undefined
-        ? { label: 'Goals', value: formatNumber(metrics.goals) }
-        : null,
-      metrics.conversion_rate !== undefined
-        ? {
-            label: 'Conversion %',
-            value: `${formatNumber(metrics.conversion_rate, { maximumFractionDigits: 1 })}%`,
-          }
-        : null,
-    ].filter(Boolean) as Array<{ label: string; value: string }>;
-  }, [shotMapData]);
 
   const competitionLabel = competitionOptions.find((opt) => opt.value === competition)?.label ?? 'Regular Season';
 
