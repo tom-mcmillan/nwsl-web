@@ -2,6 +2,8 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import Image from 'next/image';
+import type { ChatKitOptions } from '@openai/chatkit';
+import { ChatKit, useChatKit } from '@openai/chatkit-react';
 import { Panel, PanelGroup, PanelResizeHandle } from 'react-resizable-panels';
 import {
   Box,
@@ -29,6 +31,7 @@ import { useDashboardLookups } from '@/hooks/useDashboardLookups';
 import { usePlayerValuation } from '@/hooks/usePlayerValuation';
 import { useMomentum } from '@/hooks/useMomentum';
 import { usePlayerStyle } from '@/hooks/usePlayerStyle';
+import type { MomentumResponse } from '@/lib/server/apiClient';
 import { WIREFRAME_MODE } from '@/lib/ui';
 
 const competitionOptions = [
@@ -36,6 +39,7 @@ const competitionOptions = [
   { value: 'playoffs', label: 'Playoffs' },
   { value: 'all', label: 'All Competitions' },
 ] as const;
+const defaultCompetition = competitionOptions[0].value;
 
 type CompetitionOption = (typeof competitionOptions)[number]['value'];
 
@@ -76,30 +80,132 @@ function PanelSection({ title, children, disableWireframe }: PanelSectionProps) 
   );
 }
 
-function ChatPanel() {
+type ChatPanelProps = {
+  context: Record<string, unknown>;
+  momentum: MomentumResponse | undefined;
+};
+
+const chatKitOptions: ChatKitOptions = {
+  api: {
+    // TODO: configure your ChatKit API integration (URL, auth, uploads).
+  },
+  theme: {
+    colorScheme: 'light',
+    radius: 'pill',
+    density: 'normal',
+    typography: {
+      baseSize: 14,
+      fontFamily:
+        '"OpenAI Sans", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif',
+      fontFamilyMono:
+        'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "DejaVu Sans Mono", "Courier New", monospace',
+      fontSources: [
+        {
+          family: 'OpenAI Sans',
+          src: 'https://cdn.openai.com/common/fonts/openai-sans/v2/OpenAISans-Regular.woff2',
+          weight: 400,
+          style: 'normal',
+          display: 'swap',
+        },
+        // ...and 7 more font sources
+      ],
+    },
+  },
+  composer: {
+    placeholder: 'ask any question... ',
+    attachments: {
+      enabled: true,
+      maxCount: 5,
+      maxSize: 10_485_760,
+    },
+    tools: [
+      {
+        id: 'search_docs',
+        label: 'Search docs',
+        shortLabel: 'Docs',
+        placeholderOverride: 'Search documentation',
+        icon: 'book-open',
+        pinned: false,
+      },
+    ],
+  },
+  startScreen: {
+    greeting: '',
+    prompts: [],
+  },
+};
+
+function ChatPanel({ context, momentum }: ChatPanelProps) {
   if (WIREFRAME_MODE) {
     return <div className="wireframe-placeholder" />;
   }
 
-  return (
-    <div className="chatkit-card">
-      <button type="button" className="chatkit-card__reset" aria-label="Start a new chat">
-        ↻
-      </button>
-      <div className="chatkit-card__body">
-        <p className="chatkit-card__prompt">What can I help with today?</p>
-      </div>
-      <div className="chatkit-card__composer">
-        <button type="button" aria-label="Add attachment" className="chatkit-card__icon-btn">
-          +
-        </button>
-        <input type="text" placeholder="ask any question..." className="chatkit-card__input" readOnly />
-        <button type="button" aria-label="Send message" className="chatkit-card__send">
-          ↑
-        </button>
-      </div>
-    </div>
+  return <ChatKitClient context={context} momentum={momentum} />;
+}
+
+function ChatKitClient({ context, momentum }: ChatPanelProps) {
+  const [error, setError] = useState<string | null>(null);
+  const sessionContext = useMemo(
+    () => ({
+      ...context,
+      match: momentum?.match ?? null,
+    }),
+    [context, momentum?.match]
   );
+
+  const { control } = useChatKit({
+    options: chatKitOptions,
+    api: {
+      async getClientSecret(currentClientSecret) {
+        const payload = {
+          context: {
+            ...sessionContext,
+            timestamp: new Date().toISOString(),
+          },
+        };
+
+        try {
+          if (!currentClientSecret) {
+            const res = await fetch('/api/chatkit/start', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(payload),
+            });
+            const data = await res.json();
+            if (!res.ok || !data?.client_secret) {
+              throw new Error(data?.error || 'Missing client secret');
+            }
+            return data.client_secret as string;
+          }
+
+          const res = await fetch('/api/chatkit/refresh', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ currentClientSecret, context: payload.context }),
+          });
+          const data = await res.json();
+          if (!res.ok || !data?.client_secret) {
+            throw new Error(data?.error || 'Missing client secret');
+          }
+          return data.client_secret as string;
+        } catch (err) {
+          console.error('ChatKit session error', err);
+          setError('Chat assistant is currently unavailable.');
+          throw err;
+        }
+      },
+    },
+  });
+
+  if (error) {
+    return (
+      <div className="chatkit-error">
+        <p>{error}</p>
+      </div>
+    );
+  }
+
+  return <ChatKit control={control} options={chatKitOptions} className="chatkit-client" />;
 }
 
 function MetricCard({ label, value }: MetricCardProps) {
@@ -282,7 +388,7 @@ export default function Home() {
   const { data: lookups } = useDashboardLookups();
 
   const [season, setSeason] = useState<number | undefined>();
-  const competition: CompetitionOption = 'regular_season';
+  const competition: CompetitionOption = defaultCompetition;
   const [teamId, setTeamId] = useState<string | null>(null);
   const [matchId, setMatchId] = useState<string | undefined>();
   const [selectedPlayerId, setSelectedPlayerId] = useState<string | undefined>();
@@ -408,7 +514,22 @@ export default function Home() {
   }, [momentumData]);
 
 
-  const competitionLabel = competitionOptions.find((opt) => opt.value === competition)?.label ?? 'Regular Season';
+  const chatContext = useMemo(
+    () => ({
+      currentView: 'NWSL Dashboard',
+      filters: {
+        season,
+        competition,
+        teamId,
+      },
+      summary: null,
+      highlights: {
+        topTeam: teamOverviewData?.teamTable.rows?.[0]?.[0] ?? null,
+        topPlayer: playerValuationData?.players?.[0]?.playerName ?? null,
+      },
+    }),
+    [season, competition, teamId, teamOverviewData?.teamTable, playerValuationData?.players]
+  );
 
   const researchLinks = [
     { label: 'Natural Language Query: Compare two players', href: '/query' },
@@ -615,7 +736,7 @@ export default function Home() {
           <VerticalResizeHandle />
           <Panel minSize={20} defaultSize={28}>
             <div className="chatkit-column">
-              <ChatPanel />
+              <ChatPanel context={chatContext} momentum={momentumData} />
             </div>
           </Panel>
         </PanelGroup>
