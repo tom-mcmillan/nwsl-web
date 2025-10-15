@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import Image from 'next/image';
 import { useSession } from 'next-auth/react';
+import type { ChatKitOptions } from '@openai/chatkit';
 import { ChatKit, useChatKit } from '@openai/chatkit-react';
 import { Panel, PanelGroup, PanelResizeHandle } from 'react-resizable-panels';
 import {
@@ -31,6 +32,7 @@ import { useDashboardLookups } from '@/hooks/useDashboardLookups';
 import { usePlayerValuation } from '@/hooks/usePlayerValuation';
 import { useMomentum } from '@/hooks/useMomentum';
 import { usePlayerStyle } from '@/hooks/usePlayerStyle';
+import { WIREFRAME_MODE } from '@/lib/ui';
 
 const competitionOptions = [
   { value: 'regular_season', label: 'Regular Season' },
@@ -42,8 +44,8 @@ type CompetitionOption = (typeof competitionOptions)[number]['value'];
 
 type PanelSectionProps = {
   title: string;
-  subtitle?: string;
-  children: React.ReactNode;
+  children?: React.ReactNode;
+  disableWireframe?: boolean;
 };
 
 type MetricCardProps = {
@@ -63,23 +65,67 @@ const HorizontalResizeHandle = () => (
   </PanelResizeHandle>
 );
 
-function PanelSection({ title, subtitle, children }: PanelSectionProps) {
+function PanelSection({ title, children, disableWireframe }: PanelSectionProps) {
+  const showPlaceholder = WIREFRAME_MODE && !disableWireframe;
   return (
-    <Paper elevation={0} square sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
-      <Box sx={{ borderBottom: '1px solid', borderColor: 'divider', px: 1.75, py: 1.2 }}>
-        <Typography variant="subtitle2" sx={{ fontWeight: 700, letterSpacing: 0.5, textTransform: 'uppercase' }}>
-          {title}
-        </Typography>
-        {subtitle ? (
-          <Typography variant="caption" color="text.secondary">
-            {subtitle}
-          </Typography>
-        ) : null}
+    <Paper elevation={0} square className="dashboard-panel">
+      <Box className="dashboard-panel__header">
+        <span>{title}</span>
       </Box>
-      <Box sx={{ flex: 1, overflow: 'auto', p: 1.5 }}>{children}</Box>
+      <Box className="dashboard-panel__body">
+        {showPlaceholder ? <div className="wireframe-placeholder" /> : children}
+      </Box>
     </Paper>
   );
 }
+
+// ChatKit appearance/options skeleton (configure API integration in useChatKit below).
+const chatKitOptions: ChatKitOptions = {
+  theme: {
+    colorScheme: 'light',
+    radius: 'pill',
+    density: 'normal',
+    typography: {
+      baseSize: 14,
+      fontFamily:
+        '"OpenAI Sans", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif',
+      fontFamilyMono:
+        'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "DejaVu Sans Mono", "Courier New", monospace',
+      fontSources: [
+        {
+          family: 'OpenAI Sans',
+          src: 'https://cdn.openai.com/common/fonts/openai-sans/v2/OpenAISans-Regular.woff2',
+          weight: 400,
+          style: 'normal',
+          display: 'swap',
+        },
+        // ...and 7 more font sources
+      ],
+    },
+  },
+  composer: {
+    placeholder: 'ask any question... ',
+    attachments: {
+      enabled: true,
+      maxCount: 5,
+      maxSize: 10_485_760,
+    },
+    tools: [
+      {
+        id: 'search_docs',
+        label: 'Search docs',
+        shortLabel: 'Docs',
+        placeholderOverride: 'Search documentation',
+        icon: 'book-open',
+        pinned: false,
+      },
+    ],
+  },
+  startScreen: {
+    greeting: '',
+    prompts: [],
+  },
+};
 
 function MetricCard({ label, value }: MetricCardProps) {
   return (
@@ -413,6 +459,7 @@ export default function Home() {
   ];
 
   const { control } = useChatKit({
+    ...chatKitOptions,
     api: {
       async getClientSecret(currentClientSecret) {
         const pageContext = {
@@ -454,50 +501,6 @@ export default function Home() {
         return data.client_secret;
       },
     },
-    theme: {
-      colorScheme: 'light',
-      radius: 'pill',
-      density: 'normal',
-      typography: {
-        baseSize: 14,
-        fontFamily:
-          '"OpenAI Sans", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif',
-        fontFamilyMono:
-          'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "DejaVu Sans Mono", "Courier New", monospace',
-        fontSources: [
-          {
-            family: 'OpenAI Sans',
-            src: 'https://cdn.openai.com/common/fonts/openai-sans/v2/OpenAISans-Regular.woff2',
-            weight: 400,
-            style: 'normal',
-            display: 'swap',
-          },
-          // ...and 7 more font sources
-        ],
-      },
-    },
-    composer: {
-      placeholder: 'ask any question... ',
-      attachments: {
-        enabled: true,
-        maxCount: 5,
-        maxSize: 10485760,
-      },
-      tools: [
-        {
-          id: 'search_docs',
-          label: 'Search docs',
-          shortLabel: 'Docs',
-          placeholderOverride: 'Search documentation',
-          icon: 'book-open',
-          pinned: false,
-        },
-      ],
-    },
-    startScreen: {
-      greeting: '',
-      prompts: [],
-    },
   });
 
   const handlePlayerChange = (event: SelectChangeEvent<string>) => {
@@ -510,7 +513,7 @@ export default function Home() {
       <Panel minSize={45} defaultSize={70}>
         <PanelGroup direction="vertical" className="flex h-full w-full" autoSaveId="nwsl-dashboard-left">
           <Panel defaultSize={60} minSize={35}>
-            <PanelSection title="League Standings" subtitle={`${competitionLabel}${season ? ` • ${season}` : ''}`}>
+            <PanelSection title="League Standings">
               {teamOverviewLoading ? (
                 <LoadingState />
               ) : standingsRows.length ? (
@@ -527,7 +530,7 @@ export default function Home() {
           </Panel>
           <HorizontalResizeHandle />
           <Panel defaultSize={40} minSize={35}>
-            <PanelSection title="Momentum & Match Flow" subtitle={momentumData?.match ? `${momentumData.match.homeTeam} vs ${momentumData.match.awayTeam}` : undefined}>
+            <PanelSection title="Momentum & Match Flow">
               <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
                 <Typography variant="subtitle2" color="text.secondary">
                   Rolling xG window: 5 minutes
@@ -551,7 +554,7 @@ export default function Home() {
       <Panel minSize={25} defaultSize={40}>
         <PanelGroup direction="vertical" className="flex h-full w-full" autoSaveId="nwsl-dashboard-middle">
           <Panel defaultSize={60} minSize={35}>
-            <PanelSection title="Player Valuation & Advanced Metrics" subtitle={teamId ? `Filtered: ${lookups?.teams.find((team) => team.teamId === teamId)?.teamName ?? teamId}` : 'All Teams'}>
+            <PanelSection title="Player Valuation & Advanced Metrics">
               {playerValuationLoading ? (
                 <LoadingState />
               ) : playerValuationRows.length ? (
@@ -690,38 +693,22 @@ export default function Home() {
     </>
   );
 
-  const chatPanelContent = (
-    <Box
-      sx={{
-        height: '100%',
-        width: '100%',
-        backgroundColor: '#ffffff',
-        borderLeft: '1px solid #d1d5db',
-      }}
-    >
-      {isPro ? (
-        <ChatKit control={control} className="h-full w-full" />
-      ) : (
-        <Box sx={{ p: 3 }}>
-          <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 1 }}>
-            Chat Assistant
-          </Typography>
-          <Typography variant="body2" color="text.secondary">
-            NWSL Pro access unlocks the ChatKit assistant for deeper analysis.
-          </Typography>
-        </Box>
-      )}
-    </Box>
-  );
-
   return (
     <div className="h-screen flex flex-col bg-gray-100">
       <div className="flex-1 overflow-hidden p-2">
-        <PanelGroup direction="horizontal" className="flex h-full" autoSaveId="nwsl-dashboard-root-right">
+        <PanelGroup direction="horizontal" className="flex h-full" autoSaveId="nwsl-dashboard-root">
           {analyticsPanels}
           <VerticalResizeHandle />
-          <Panel minSize={18} defaultSize={28}>
-            {chatPanelContent}
+          <Panel minSize={20} defaultSize={28}>
+            <PanelSection title="Chat Assistant" disableWireframe>
+              {isPro ? (
+                <ChatKit control={control} options={chatKitOptions} className="h-full w-full" />
+              ) : (
+                <Typography variant="body2" color="text.secondary">
+                  NWSL Pro access unlocks the ChatKit assistant for deeper analysis.
+                </Typography>
+              )}
+            </PanelSection>
           </Panel>
         </PanelGroup>
       </div>
