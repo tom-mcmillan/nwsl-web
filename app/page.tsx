@@ -15,7 +15,13 @@ import {
   Select,
   SelectChangeEvent,
   Typography,
-  Divider
+  Divider,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow
 } from '@mui/material';
 
 import { DataPanel } from '@/components/DataPanel';
@@ -117,6 +123,101 @@ function EmptyState({ message }: { message: string }) {
   );
 }
 
+type StandingsRow = {
+  team: string;
+  teamId?: string | null;
+  matches: number;
+  wins: number;
+  draws: number;
+  losses: number;
+  goalsFor: number;
+  goalsAgainst: number;
+  goalDiff: number;
+  points: number;
+  pointsPerGame: number | null;
+  shotAccuracy: number | null;
+  passAccuracy: number | null;
+};
+
+function LeagueStandingsTable({
+  rows,
+  loading,
+  selectedTeamId,
+  onSelectTeam,
+}: {
+  rows: StandingsRow[];
+  loading: boolean;
+  selectedTeamId: string | null;
+  onSelectTeam?: (teamId: string | null) => void;
+}) {
+  if (loading) {
+    return <LoadingState />;
+  }
+
+  if (!rows.length) {
+    return <EmptyState message="Standings unavailable for the selected filters." />;
+  }
+
+  return (
+    <TableContainer sx={{ maxHeight: 460 }}>
+      <Table stickyHeader size="small" aria-label="League standings">
+        <TableHead>
+          <TableRow>
+            <TableCell sx={{ width: '32px' }}>#</TableCell>
+            <TableCell>Team</TableCell>
+            <TableCell align="right">MP</TableCell>
+            <TableCell align="right">PTS</TableCell>
+            <TableCell align="right">GD</TableCell>
+            <TableCell align="right">PPG</TableCell>
+            <TableCell align="right">Shot Acc %</TableCell>
+            <TableCell align="right">Pass Acc %</TableCell>
+          </TableRow>
+        </TableHead>
+        <TableBody>
+          {rows.map((row, index) => {
+            const isSelected = Boolean(row.teamId && row.teamId === selectedTeamId);
+            const handleClick = () => {
+              if (onSelectTeam) {
+                onSelectTeam(row.teamId ?? null);
+              }
+            };
+            return (
+              <TableRow
+                key={row.team}
+                hover
+                onClick={onSelectTeam ? handleClick : undefined}
+                sx={{
+                  cursor: onSelectTeam ? 'pointer' : 'default',
+                  backgroundColor: isSelected ? 'rgba(59,130,246,0.08)' : undefined,
+                }}
+              >
+                <TableCell sx={{ fontWeight: 600 }}>{index + 1}</TableCell>
+                <TableCell sx={{ fontWeight: 600 }}>{row.team}</TableCell>
+                <TableCell align="right">{formatNumber(row.matches)}</TableCell>
+                <TableCell align="right">{formatNumber(row.points)}</TableCell>
+                <TableCell align="right">{formatNumber(row.goalDiff)}</TableCell>
+                <TableCell align="right">
+                  {row.pointsPerGame === null ? '—' : formatNumber(row.pointsPerGame, { maximumFractionDigits: 2 })}
+                </TableCell>
+                <TableCell align="right">
+                  {row.shotAccuracy === null
+                    ? '—'
+                    : `${formatNumber(row.shotAccuracy, { maximumFractionDigits: 1 })}%`}
+                </TableCell>
+                <TableCell align="right">
+                  {row.passAccuracy === null
+                    ? '—'
+                    : `${formatNumber(row.passAccuracy, { maximumFractionDigits: 1 })}%`}
+                </TableCell>
+              </TableRow>
+            );
+          })}
+        </TableBody>
+      </Table>
+    </TableContainer>
+  );
+}
+
 const formatNumber = (value?: number | null, options: Intl.NumberFormatOptions = {}) => {
   if (value === null || value === undefined || Number.isNaN(value)) {
     return '—';
@@ -181,18 +282,57 @@ export default function Home() {
     }
   }, [playerValuationData, selectedPlayerId]);
 
-  const teamTableRows = useMemo(() => {
+  const standingsRows = useMemo<StandingsRow[]>(() => {
     const table = teamOverviewData?.teamTable;
-    if (!table) return [];
-    const columns = table.columns;
-    return table.rows.map((row, index) => {
-      const entry: Record<string, unknown> = { id: `${row[0]}-${index}` };
-      columns.forEach((col, idx) => {
-        entry[col] = row[idx];
+    if (!table?.rows?.length) return [];
+    const lookupTeams = lookups?.teams ?? [];
+
+    return table.rows
+      .map((row) => {
+        const [teamName, mp, w, d, l, gf, ga, gd, ppg, shotAcc, passAcc] = row as (
+          | string
+          | number
+          | null
+        )[];
+
+        const wins = Number(w ?? 0);
+        const draws = Number(d ?? 0);
+        const losses = Number(l ?? 0);
+        const matches = Number(mp ?? wins + draws + losses);
+        const goalsFor = Number(gf ?? 0);
+        const goalsAgainst = Number(ga ?? 0);
+        const goalDiff = Number(gd ?? goalsFor - goalsAgainst);
+        const points = wins * 3 + draws;
+        const pointsPerGame = typeof ppg === 'number' ? ppg : matches > 0 ? points / matches : null;
+        const shotAccuracy = typeof shotAcc === 'number' ? shotAcc : null;
+        const passAccuracy = typeof passAcc === 'number' ? passAcc : null;
+        const teamId =
+          lookupTeams.find((t) => t.teamName === teamName)?.teamId ??
+          lookupTeams.find((t) => t.teamName.toLowerCase() === String(teamName ?? '').toLowerCase())?.teamId ??
+          null;
+
+        return {
+          team: String(teamName ?? 'Unknown'),
+          teamId,
+          matches,
+          wins,
+          draws,
+          losses,
+          goalsFor,
+          goalsAgainst,
+          goalDiff,
+          points,
+          pointsPerGame,
+          shotAccuracy,
+          passAccuracy,
+        };
+      })
+      .sort((a, b) => {
+        if (b.points !== a.points) return b.points - a.points;
+        if (b.goalDiff !== a.goalDiff) return b.goalDiff - a.goalDiff;
+        return b.goalsFor - a.goalsFor;
       });
-      return entry;
-    });
-  }, [teamOverviewData?.teamTable]);
+  }, [teamOverviewData?.teamTable, lookups?.teams]);
 
   const playerValuationRows = useMemo(() => {
     if (!playerValuationData) return [];
@@ -381,7 +521,7 @@ export default function Home() {
       <Panel minSize={45} defaultSize={70}>
         <PanelGroup direction="vertical" className="flex h-full w-full" autoSaveId="nwsl-dashboard-left">
           <Panel defaultSize={60} minSize={35}>
-            <PanelSection title="Team Overview" subtitle={`${competitionLabel}${season ? ` • ${season}` : ''}`}>
+            <PanelSection title="League Standings" subtitle={`${competitionLabel}${season ? ` • ${season}` : ''}`}>
               <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1.5, alignItems: 'center', mb: 1.5 }}>
                 <FormControl size="small" sx={{ minWidth: 160 }}>
                   <InputLabel id="team-select-label">Team</InputLabel>
@@ -402,7 +542,7 @@ export default function Home() {
               </Box>
               {teamOverviewLoading ? (
                 <LoadingState />
-              ) : teamTableRows.length ? (
+              ) : standingsRows.length ? (
                 <>
                   <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: 1.5, mb: 1.5 }}>
                     {leagueAverageCards.map((metric) => (
@@ -443,7 +583,12 @@ export default function Home() {
                       </Box>
                     </Box>
                   ) : null}
-                  <DataPanel heading="League Table" data={teamTableRows} height="100%" searchable />
+                  <LeagueStandingsTable
+                    rows={standingsRows}
+                    loading={teamOverviewLoading}
+                    selectedTeamId={teamId}
+                    onSelectTeam={(id) => setTeamId(id)}
+                  />
                 </>
               ) : (
                 <EmptyState message="No team overview data available for the selected filters." />
