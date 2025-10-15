@@ -543,53 +543,12 @@ export default function Home() {
               {teamOverviewLoading ? (
                 <LoadingState />
               ) : standingsRows.length ? (
-                <>
-                  <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: 1.5, mb: 1.5 }}>
-                    {leagueAverageCards.map((metric) => (
-                      <MetricCard key={metric.label} label={metric.label} value={metric.value} />
-                    ))}
-                  </Box>
-                  {shotMapTeamName ? (
-                    <Box sx={{ display: 'flex', gap: 1.5, flexWrap: 'wrap', mb: 1.5 }}>
-                      <Paper
-                        variant="outlined"
-                        sx={{ flex: 1, minWidth: 260, position: 'relative', minHeight: 220, overflow: 'hidden' }}
-                      >
-                        {shotMapLoading ? (
-                          <LoadingState />
-                        ) : shotMapData ? (
-                          <Image
-                            src={shotMapData.imageUrl}
-                            alt={`${shotMapTeamName} shot map`}
-                            fill
-                            style={{ objectFit: 'cover' }}
-                            sizes="(max-width: 768px) 100vw, 33vw"
-                          />
-                        ) : (
-                          <EmptyState message="Unable to load shot map." />
-                        )}
-                      </Paper>
-                      <Box sx={{ flex: 1, minWidth: 220, display: 'flex', flexDirection: 'column', gap: 1.5 }}>
-                        {shotMapMetricCards.length ? (
-                          <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: 1 }}>
-                            {shotMapMetricCards.map((metric) => (
-                              <MetricCard key={metric.label} label={metric.label} value={metric.value} />
-                            ))}
-                          </Box>
-                        ) : null}
-                        <Typography variant="body2" color="text.secondary">
-                          Live shot map for {shotMapTeamName}. Metrics update with filters and can be refreshed on demand.
-                        </Typography>
-                      </Box>
-                    </Box>
-                  ) : null}
-                  <LeagueStandingsTable
-                    rows={standingsRows}
-                    loading={teamOverviewLoading}
-                    selectedTeamId={teamId}
-                    onSelectTeam={(id) => setTeamId(id)}
-                  />
-                </>
+                <LeagueStandingsTable
+                  rows={standingsRows}
+                  loading={teamOverviewLoading}
+                  selectedTeamId={teamId}
+                  onSelectTeam={(id) => setTeamId(id)}
+                />
               ) : (
                 <EmptyState message="No team overview data available for the selected filters." />
               )}
