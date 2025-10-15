@@ -161,18 +161,18 @@ function LeagueStandingsTable({
 
   return (
     <TableContainer sx={{ maxHeight: 460 }}>
-      <Table stickyHeader size="small" aria-label="League standings">
+      <Table stickyHeader size="small" aria-label="League standings" sx={{ '& .MuiTableRow-root': { height: 40 } }}>
         <TableHead>
-          <TableRow>
-            <TableCell sx={{ width: '32px' }}>#</TableCell>
-            <TableCell>Team</TableCell>
-            <TableCell align="right">Record</TableCell>
-            <TableCell align="right">MP</TableCell>
-            <TableCell align="right">PTS</TableCell>
-            <TableCell align="right">GD</TableCell>
-            <TableCell align="right">PPG</TableCell>
-            <TableCell align="right">Shot Acc %</TableCell>
-            <TableCell align="right">Pass Acc %</TableCell>
+          <TableRow sx={{ '& th': { fontSize: '0.72rem', fontWeight: 700, color: '#1f2937', borderBottom: '1px solid #d1d5db' } }}>
+            <TableCell sx={{ width: 32, color: '#9ca3af' }}>#</TableCell>
+            <TableCell sx={{ textTransform: 'uppercase', letterSpacing: 0.4 }}>Team</TableCell>
+            <TableCell align="right" sx={{ color: '#9ca3af' }}>Record</TableCell>
+            <TableCell align="right" sx={{ color: '#9ca3af' }}>MP</TableCell>
+            <TableCell align="right" sx={{ color: '#9ca3af' }}>PTS</TableCell>
+            <TableCell align="right" sx={{ color: '#9ca3af' }}>GD</TableCell>
+            <TableCell align="right" sx={{ color: '#9ca3af' }}>PPG</TableCell>
+            <TableCell align="right" sx={{ color: '#9ca3af' }}>Shot%</TableCell>
+            <TableCell align="right" sx={{ color: '#9ca3af' }}>Pass%</TableCell>
           </TableRow>
         </TableHead>
         <TableBody>
@@ -187,6 +187,8 @@ function LeagueStandingsTable({
             const isTopFour = index < 4;
             const isBottomTwo = index >= rows.length - 2;
             const ppgPercent = maxPpg > 0 && row.pointsPerGame ? Math.min(row.pointsPerGame / maxPpg, 1) : 0;
+            const rankAccent = isTopFour ? '#0b75ff' : isBottomTwo ? '#ef4444' : 'transparent';
+            const rowBg = index % 2 === 0 ? 'rgba(248,249,251,0.85)' : '#ffffff';
             return (
               <TableRow
                 key={row.team}
@@ -194,29 +196,33 @@ function LeagueStandingsTable({
                 onClick={onSelectTeam ? handleClick : undefined}
                 sx={{
                   cursor: onSelectTeam ? 'pointer' : 'default',
-                  backgroundColor: isSelected ? 'rgba(59,130,246,0.08)' : isBottomTwo ? 'rgba(239,68,68,0.05)' : undefined,
-                  borderLeft: isTopFour ? '3px solid #0b75ff' : isBottomTwo ? '3px solid #ef4444' : '3px solid transparent',
+                  backgroundColor: isSelected ? 'rgba(11,117,255,0.08)' : rowBg,
+                  borderLeft: `3px solid ${rankAccent}`,
+                  borderBottom: '1px solid #e5e7eb',
+                  '&:last-of-type': { borderBottom: '1px solid #d1d5db' },
                 }}
               >
-                <TableCell sx={{ fontWeight: 600 }}>{index + 1}</TableCell>
-                <TableCell sx={{ fontWeight: 700 }}>{row.team}</TableCell>
-                <TableCell align="right" sx={{ fontSize: '0.75rem', color: 'text.secondary', fontWeight: 600 }}>
+                <TableCell sx={{ fontWeight: 700, color: '#9ca3af' }}>{index + 1}</TableCell>
+                <TableCell sx={{ fontWeight: 800, color: '#111827' }}>{row.team}</TableCell>
+                <TableCell align="right" sx={{ fontSize: '0.72rem', fontWeight: 600, color: '#6b7280' }}>
                   {recordLabel}
                 </TableCell>
-                <TableCell align="right">{formatNumber(row.matches)}</TableCell>
-                <TableCell align="right" sx={{ fontWeight: 800, fontSize: '1rem', color: '#111827' }}>
+                <TableCell align="right" sx={{ fontWeight: 600, color: '#374151' }}>{formatNumber(row.matches)}</TableCell>
+                <TableCell align="right" sx={{ fontWeight: 900, fontSize: '1rem', color: isTopFour ? '#16a34a' : '#111827' }}>
                   {formatNumber(row.points)}
                 </TableCell>
-                <TableCell align="right">{formatNumber(row.goalDiff)}</TableCell>
+                <TableCell align="right" sx={{ fontWeight: 600, color: row.goalDiff >= 0 ? '#16a34a' : '#ef4444' }}>
+                  {formatNumber(row.goalDiff)}
+                </TableCell>
                 <TableCell align="right">
-                  <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 1 }}>
+                  <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 0.75 }}>
                     <Box
                       sx={{
                         position: 'relative',
                         width: 64,
                         height: 6,
                         borderRadius: 999,
-                        backgroundColor: 'rgba(11,117,255,0.12)',
+                        backgroundColor: 'rgba(147,197,253,0.3)',
                         overflow: 'hidden',
                       }}
                     >
@@ -232,7 +238,7 @@ function LeagueStandingsTable({
                         }}
                       />
                     </Box>
-                    <Typography component="span" sx={{ fontSize: '0.8rem', fontWeight: 600 }}>
+                    <Typography component="span" sx={{ fontSize: '0.78rem', fontWeight: 700, color: '#1f2937' }}>
                       {row.pointsPerGame === null ? '—' : formatNumber(row.pointsPerGame, { maximumFractionDigits: 2 })}
                     </Typography>
                   </Box>
@@ -248,9 +254,9 @@ function LeagueStandingsTable({
                         py: 0.25,
                         borderRadius: 999,
                         fontSize: '0.75rem',
-                        fontWeight: 600,
-                        color: '#0b75ff',
-                        backgroundColor: 'rgba(11,117,255,0.15)',
+                        fontWeight: 700,
+                        color: row.shotAccuracy >= 50 ? '#0b75ff' : '#ef4444',
+                        backgroundColor: row.shotAccuracy >= 50 ? 'rgba(59,130,246,0.16)' : 'rgba(244,63,94,0.16)',
                       }}
                     >
                       {formatNumber(row.shotAccuracy, { maximumFractionDigits: 1 })}%
@@ -268,9 +274,9 @@ function LeagueStandingsTable({
                         py: 0.25,
                         borderRadius: 999,
                         fontSize: '0.75rem',
-                        fontWeight: 600,
-                        color: '#10b981',
-                        backgroundColor: 'rgba(16,185,129,0.15)',
+                        fontWeight: 700,
+                        color: row.passAccuracy >= 80 ? '#10b981' : '#f97316',
+                        backgroundColor: row.passAccuracy >= 80 ? 'rgba(16,185,129,0.16)' : 'rgba(249,115,22,0.16)',
                       }}
                     >
                       {formatNumber(row.passAccuracy, { maximumFractionDigits: 1 })}%
