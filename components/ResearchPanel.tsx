@@ -1,6 +1,7 @@
 'use client';
 
-import { Paper, Box, Typography, List, ListItemButton } from '@mui/material';
+import { Paper, Box, List, ListItemButton } from '@mui/material';
+import { WIREFRAME_MODE } from '@/lib/ui';
 
 type LinkItem = { label: string; href: string };
 
@@ -10,20 +11,24 @@ interface ResearchPanelProps {
   height?: number | string;
 }
 
-export function ResearchPanel({ heading = 'RESEARCH', links, height = 400 }: ResearchPanelProps) {
-  return (
-    <Paper elevation={0} square sx={{ height, display: 'flex', flexDirection: 'column', overflow: 'auto' }}>
-      {/* Heading */}
-      <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
-        <Box sx={{ px: 1.5 }}>
-          <Typography component="h3" sx={{ fontSize: '0.85rem', fontWeight: 700, letterSpacing: 0.2, color: 'text.secondary', py: 0.75 }}>
-            {heading}
-          </Typography>
+export function ResearchPanel({ heading = 'RESEARCH', links, height = 320 }: ResearchPanelProps) {
+  if (WIREFRAME_MODE) {
+    return (
+      <Paper elevation={0} square className="table-panel" style={{ height }}>
+        <Box className="table-panel__header">
+          <span>{heading}</span>
         </Box>
-      </Box>
+        <div className="table-panel__body wireframe-placeholder" />
+      </Paper>
+    );
+  }
 
-      {/* Links list */}
-      <Box sx={{ flexGrow: 1, overflow: 'auto' }}>
+  return (
+    <Paper elevation={0} square className="table-panel" style={{ height }}>
+      <Box className="table-panel__header">
+        <span>{heading}</span>
+      </Box>
+      <Box sx={{ flex: 1, overflow: 'auto' }}>
         <List disablePadding dense>
           {links.map((link, idx) => (
             <ListItemButton
@@ -31,10 +36,9 @@ export function ResearchPanel({ heading = 'RESEARCH', links, height = 400 }: Res
               component="a"
               href={link.href}
               sx={{
-                px: 1.5,
-                py: 0.75,
-                borderBottom: '1px solid',
-                borderColor: 'divider',
+                px: 1.25,
+                py: 0.65,
+                borderBottom: '1px solid #e5e7eb',
                 fontSize: '12px',
                 lineHeight: 1.3,
               }}

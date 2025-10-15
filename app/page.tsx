@@ -2,9 +2,6 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import Image from 'next/image';
-import { useSession } from 'next-auth/react';
-import type { ChatKitOptions } from '@openai/chatkit';
-import { ChatKit, useChatKit } from '@openai/chatkit-react';
 import { Panel, PanelGroup, PanelResizeHandle } from 'react-resizable-panels';
 import {
   Box,
@@ -79,53 +76,31 @@ function PanelSection({ title, children, disableWireframe }: PanelSectionProps) 
   );
 }
 
-// ChatKit appearance/options skeleton (configure API integration in useChatKit below).
-const chatKitOptions: ChatKitOptions = {
-  theme: {
-    colorScheme: 'light',
-    radius: 'pill',
-    density: 'normal',
-    typography: {
-      baseSize: 14,
-      fontFamily:
-        '"OpenAI Sans", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif',
-      fontFamilyMono:
-        'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "DejaVu Sans Mono", "Courier New", monospace',
-      fontSources: [
-        {
-          family: 'OpenAI Sans',
-          src: 'https://cdn.openai.com/common/fonts/openai-sans/v2/OpenAISans-Regular.woff2',
-          weight: 400,
-          style: 'normal',
-          display: 'swap',
-        },
-        // ...and 7 more font sources
-      ],
-    },
-  },
-  composer: {
-    placeholder: 'ask any question... ',
-    attachments: {
-      enabled: true,
-      maxCount: 5,
-      maxSize: 10_485_760,
-    },
-    tools: [
-      {
-        id: 'search_docs',
-        label: 'Search docs',
-        shortLabel: 'Docs',
-        placeholderOverride: 'Search documentation',
-        icon: 'book-open',
-        pinned: false,
-      },
-    ],
-  },
-  startScreen: {
-    greeting: '',
-    prompts: [],
-  },
-};
+function ChatPanel() {
+  if (WIREFRAME_MODE) {
+    return <div className="wireframe-placeholder" />;
+  }
+
+  return (
+    <div className="chatkit-card">
+      <button type="button" className="chatkit-card__reset" aria-label="Start a new chat">
+        ↻
+      </button>
+      <div className="chatkit-card__body">
+        <p className="chatkit-card__prompt">What can I help with today?</p>
+      </div>
+      <div className="chatkit-card__composer">
+        <button type="button" aria-label="Add attachment" className="chatkit-card__icon-btn">
+          +
+        </button>
+        <input type="text" placeholder="ask any question..." className="chatkit-card__input" readOnly />
+        <button type="button" aria-label="Send message" className="chatkit-card__send">
+          ↑
+        </button>
+      </div>
+    </div>
+  );
+}
 
 function MetricCard({ label, value }: MetricCardProps) {
   return (
@@ -303,8 +278,6 @@ const formatNumber = (value?: number | null, options: Intl.NumberFormatOptions =
 };
 
 export default function Home() {
-  const { data: session } = useSession();
-  const isPro = session?.user?.tier === 'PRO';
 
   const { data: lookups } = useDashboardLookups();
 
@@ -437,71 +410,12 @@ export default function Home() {
 
   const competitionLabel = competitionOptions.find((opt) => opt.value === competition)?.label ?? 'Regular Season';
 
-  const chatContext = useMemo(() => ({
-    currentView: 'NWSL Dashboard',
-    filters: {
-      season,
-      competition,
-      teamId,
-    },
-    summary: null,
-    highlights: {
-      topTeam: teamOverviewData?.teamTable.rows?.[0]?.[0] ?? null,
-      topPlayer: playerValuationData?.players?.[0]?.playerName ?? null,
-    },
-  }), [season, competition, teamId, teamOverviewData?.teamTable, playerValuationData?.players]);
-
   const researchLinks = [
     { label: 'Natural Language Query: Compare two players', href: '/query' },
     { label: 'SQL Explorer: Team passing accuracy by match', href: '/explore' },
     { label: 'League standings methodology (panel)', href: '/api/panel/league-standings?limit=14' },
     { label: 'Top scorers (panel)', href: '/api/panel/top-scorers?limit=10' },
   ];
-
-  const { control } = useChatKit({
-    ...chatKitOptions,
-    api: {
-      async getClientSecret(currentClientSecret) {
-        const pageContext = {
-          ...chatContext,
-          match: momentumData?.match ?? null,
-          timestamp: new Date().toISOString(),
-        };
-
-        if (!currentClientSecret) {
-          const res = await fetch('/api/chatkit/start', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ context: pageContext }),
-          });
-          if (!res.ok) {
-            const errorBody = await res.json().catch(() => ({}));
-            throw new Error(errorBody?.error || 'Unable to start ChatKit session');
-          }
-          const data = await res.json();
-          if (!data?.client_secret) {
-            throw new Error('ChatKit session did not return a client secret');
-          }
-          return data.client_secret;
-        }
-
-        const res = await fetch('/api/chatkit/refresh', {
-          method: 'POST',
-          body: JSON.stringify({ currentClientSecret, context: pageContext }),
-          headers: { 'Content-Type': 'application/json' },
-        });
-        if (!res.ok) {
-          const errorBody = await res.json().catch(() => ({}));
-          throw new Error(errorBody?.error || 'Unable to refresh ChatKit session');
-        }
-        const data = await res.json();
-        if (!data?.client_secret) {
-          throw new Error('ChatKit refresh did not return a client secret');
-        }
-        return data.client_secret;
-      },
-    },
-  });
 
   const handlePlayerChange = (event: SelectChangeEvent<string>) => {
     const value = event.target.value;
@@ -700,15 +614,9 @@ export default function Home() {
           {analyticsPanels}
           <VerticalResizeHandle />
           <Panel minSize={20} defaultSize={28}>
-            <PanelSection title="Chat Assistant" disableWireframe>
-              {isPro ? (
-                <ChatKit control={control} options={chatKitOptions} className="h-full w-full" />
-              ) : (
-                <Typography variant="body2" color="text.secondary">
-                  NWSL Pro access unlocks the ChatKit assistant for deeper analysis.
-                </Typography>
-              )}
-            </PanelSection>
+            <div className="chatkit-column">
+              <ChatPanel />
+            </div>
           </Panel>
         </PanelGroup>
       </div>

@@ -1,0 +1,47 @@
+{
+  "match": {
+    "matchId": "match-001",
+    "matchDate": "2025-06-15",
+    "seasonYear": 2025,
+    "competition": "regular_season",
+    "homeTeam": "Kansas City Current",
+    "awayTeam": "Washington Spirit",
+    "homeScore": 2,
+    "awayScore": 1
+  },
+  "momentum": {
+    "metric": "rolling_xg",
+    "window": 5,
+    "series": [
+      {
+        "team": "Kansas City Current",
+        "teamId": "kc-current",
+        "points": [
+          { "minute": 10, "value": 0.05 },
+          { "minute": 30, "value": 0.18 },
+          { "minute": 60, "value": 0.42 },
+          { "minute": 90, "value": 0.55 }
+        ]
+      },
+      {
+        "team": "Washington Spirit",
+        "teamId": "washington-spirit",
+        "points": [
+          { "minute": 10, "value": 0.04 },
+          { "minute": 30, "value": 0.12 },
+          { "minute": 60, "value": 0.20 },
+          { "minute": 90, "value": 0.28 }
+        ]
+      }
+    ]
+  },
+  "events": [
+    { "minute": 12, "team": "Kansas City Current", "teamId": "kc-current", "player": "K. Nadener", "event": "Shot", "detail": "Saved" },
+    { "minute": 32, "team": "Kansas City Current", "teamId": "kc-current", "player": "M. Cooper", "event": "Goal", "detail": "Right Foot" },
+    { "minute": 48, "team": "Washington Spirit", "teamId": "washington-spirit", "player": "T. Rodman", "event": "Goal", "detail": "Header" }
+  ],
+  "valueFlow": {
+    "nodes": [],
+    "links": []
+  }
+}

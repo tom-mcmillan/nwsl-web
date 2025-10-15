@@ -1,0 +1,87 @@
+{
+  "seasonYear": 2025,
+  "competition": "regular_season",
+  "teamFilter": {
+    "selectedTeamId": null,
+    "availableTeams": [
+      { "teamId": "kc-current", "teamName": "Kansas City Current" },
+      { "teamId": "washington-spirit", "teamName": "Washington Spirit" },
+      { "teamId": "gotham", "teamName": "Gotham FC" }
+    ]
+  },
+  "filters": {
+    "minMinutes": 600,
+    "limit": 25,
+    "orderBy": "vaep"
+  },
+  "headline": {
+    "topXg": { "playerId": "smith", "playerName": "Sophia Smith", "teamName": "Portland Thorns", "value": 21.5 },
+    "topXt": { "playerId": "lavelle", "playerName": "Rose Lavelle", "teamName": "OL Reign", "value": 20.99 },
+    "medianVaep": 0.35
+  },
+  "players": [
+    {
+      "playerId": "nadener",
+      "playerName": "Kara Nadener",
+      "teamId": "orlando-pride",
+      "teamName": "Orlando Pride",
+      "minutes": 1820,
+      "matches": 21,
+      "goals": 9,
+      "assists": 6,
+      "shots": 44,
+      "shotAccuracy": 0.63,
+      "xg": 10.2,
+      "xa": 7.6,
+      "xt": 18.9,
+      "vaepTotal": 4.25,
+      "vaepOffensive": 5.12,
+      "vaepDefensive": -0.87
+    },
+    {
+      "playerId": "lavelle",
+      "playerName": "Rose Lavelle",
+      "teamId": "ol-reign",
+      "teamName": "Seattle Reign",
+      "minutes": 1930,
+      "matches": 22,
+      "goals": 7,
+      "assists": 10,
+      "shots": 35,
+      "shotAccuracy": 0.57,
+      "xg": 8.4,
+      "xa": 9.1,
+      "xt": 20.99,
+      "vaepTotal": 3.72,
+      "vaepOffensive": 4.85,
+      "vaepDefensive": -1.13
+    },
+    {
+      "playerId": "lavelle_2",
+      "playerName": "Rose Lavelle",
+      "teamId": "washington-spirit",
+      "teamName": "Washington Spirit",
+      "minutes": 2100,
+      "matches": 24,
+      "goals": 6,
+      "assists": 8,
+      "shots": 33,
+      "shotAccuracy": 0.58,
+      "xg": 7.9,
+      "xa": 8.3,
+      "xt": 19.2,
+      "vaepTotal": 3.15,
+      "vaepOffensive": 4.12,
+      "vaepDefensive": -0.97
+    }
+  ],
+  "valueFlow": {
+    "nodes": [
+      { "id": "node-team-kc", "label": "Kansas City", "type": "team" },
+      { "id": "node-player-nadener", "label": "K. Nadener", "type": "player", "teamId": "orlando-pride" }
+    ],
+    "links": [
+      { "source": "node-team-kc", "target": "node-player-nadener", "weight": 12.5, "vaep": 2.8, "offensiveVaep": 3.6, "defensiveVaep": -0.8 }
+    ]
+  }
+}

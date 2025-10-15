@@ -1,0 +1,272 @@
+{
+  "seasonYear": 2025,
+  "competition": "regular_season",
+  "leagueAverages": {
+    "goalsPerMatch": 2.9,
+    "shotsPerMatch": 24.3,
+    "passAccuracyPct": 74.2,
+    "homeWinPct": 0.54
+  },
+  "teamTable": {
+    "columns": [
+      "team",
+      "mp",
+      "w",
+      "d",
+      "l",
+      "gf",
+      "ga",
+      "gd",
+      "ppg",
+      "shot_acc_pct",
+      "pass_acc_pct"
+    ],
+    "rows": [
+      [
+        "Kansas City Current",
+        23,
+        17,
+        4,
+        2,
+        39,
+        10,
+        29,
+        2.39,
+        67.3,
+        72.4,
+        29,
+        0.25,
+        0.18
+      ],
+      [
+        "Washington Spirit",
+        23,
+        11,
+        8,
+        4,
+        35,
+        28,
+        7,
+        1.78,
+        60.8,
+        74.2,
+        7,
+        0.25,
+        0.18
+      ],
+      [
+        "Gotham FC",
+        23,
+        9,
+        8,
+        6,
+        31,
+        18,
+        13,
+        1.52,
+        64.9,
+        70.5,
+        13,
+        0.25,
+        0.18
+      ],
+      [
+        "Portland Thorns",
+        23,
+        9,
+        7,
+        7,
+        31,
+        27,
+        4,
+        1.48,
+        62.3,
+        72.7,
+        4,
+        0.25,
+        0.18
+      ],
+      [
+        "Orlando Pride",
+        23,
+        9,
+        6,
+        8,
+        28,
+        24,
+        4,
+        1.43,
+        64.6,
+        75.7,
+        4,
+        0.25,
+        0.18
+      ],
+      [
+        "Seattle Reign",
+        23,
+        8,
+        9,
+        6,
+        26,
+        23,
+        3,
+        1.43,
+        67.8,
+        70.8,
+        3,
+        0.25,
+        0.18
+      ],
+      [
+        "Racing Louisville",
+        23,
+        9,
+        5,
+        9,
+        31,
+        35,
+        -4,
+        1.39,
+        56.1,
+        67.5,
+        -4,
+        0.25,
+        0.18
+      ],
+      [
+        "San Diego Wave",
+        23,
+        8,
+        7,
+        8,
+        30,
+        28,
+        2,
+        1.35,
+        70.1,
+        80.3,
+        2,
+        0.25,
+        0.18
+      ],
+      [
+        "North Carolina Courage",
+        23,
+        7,
+        8,
+        8,
+        28,
+        33,
+        -5,
+        1.26,
+        62.0,
+        75.1,
+        -5,
+        0.25,
+        0.18
+      ],
+      [
+        "Houston Dash",
+        23,
+        7,
+        7,
+        9,
+        26,
+        31,
+        -5,
+        1.22,
+        63.2,
+        73.7,
+        -5,
+        0.25,
+        0.18
+      ]
+    ]
+  },
+  "barChart": {
+    "series": [
+      {
+        "name": "Points per Game",
+        "data": [
+          {
+            "team": "Kansas City Current",
+            "value": 2.39
+          },
+          {
+            "team": "Washington Spirit",
+            "value": 1.78
+          },
+          {
+            "team": "Gotham FC",
+            "value": 1.52
+          },
+          {
+            "team": "Portland Thorns",
+            "value": 1.48
+          },
+          {
+            "team": "Orlando Pride",
+            "value": 1.43
+          }
+        ]
+      },
+      {
+        "name": "Goals For",
+        "data": [
+          {
+            "team": "Kansas City Current",
+            "value": 39
+          },
+          {
+            "team": "Washington Spirit",
+            "value": 35
+          },
+          {
+            "team": "Gotham FC",
+            "value": 31
+          },
+          {
+            "team": "Portland Thorns",
+            "value": 31
+          },
+          {
+            "team": "Orlando Pride",
+            "value": 28
+          }
+        ]
+      }
+    ]
+  },
+  "teamFilter": {
+    "selectedTeamId": null,
+    "selectedTeamName": "All Teams",
+    "availableTeams": [
+      {
+        "teamId": "kc-current",
+        "teamName": "Kansas City Current",
+        "shortName": "KC Current"
+      },
+      {
+        "teamId": "washington-spirit",
+        "teamName": "Washington Spirit",
+        "shortName": "Spirit"
+      },
+      {
+        "teamId": "gotham",
+        "teamName": "Gotham FC",
+        "shortName": "Gotham"
+      },
+      {
+        "teamId": "portland-thorns",
+        "teamName": "Portland Thorns",
+        "shortName": "Thorns"
+      },
+      {
+        "teamId": "orlando-pride",
+        "teamName": "Orlando Pride",
+        "shortName": "Pride"
+      }
+    ]
+  }
+}

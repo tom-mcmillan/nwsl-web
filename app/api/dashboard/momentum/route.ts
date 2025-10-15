@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { fetchMomentum } from '@/lib/server/apiClient';
+import fallback from '@/data/fallback/momentum.json';
 
 export async function GET(request: Request) {
   const url = new URL(request.url);
@@ -14,6 +15,6 @@ export async function GET(request: Request) {
     return NextResponse.json(data);
   } catch (error) {
     console.error('[API] dashboard/momentum error', error);
-    return NextResponse.json({ error: 'Failed to load match momentum' }, { status: 500 });
+    return NextResponse.json(fallback);
   }
 }

@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { fetchPlayerValuation } from '@/lib/server/apiClient';
+import fallback from '@/data/fallback/player-valuation.json';
 
 export async function GET(request: Request) {
   const url = new URL(request.url);
@@ -27,6 +28,6 @@ export async function GET(request: Request) {
     return NextResponse.json(data);
   } catch (error) {
     console.error('[API] dashboard/player-valuation error', error);
-    return NextResponse.json({ error: 'Failed to load player valuation' }, { status: 500 });
+    return NextResponse.json(fallback);
   }
 }

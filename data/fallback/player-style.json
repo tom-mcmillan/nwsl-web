@@ -1,0 +1,35 @@
+{
+  "player": {
+    "playerId": "nadener",
+    "playerName": "Kara Nadener",
+    "teamId": "orlando-pride",
+    "teamName": "Orlando Pride",
+    "seasonYear": 2025,
+    "competition": "regular_season",
+    "matchesPlayed": 21,
+    "minutesPlayed": 1820
+  },
+  "radar": {
+    "metrics": [
+      { "label": "Goals per 90", "value": 0.42, "percentile": 78.0 },
+      { "label": "Assists per 90", "value": 0.28, "percentile": 71.0 },
+      { "label": "Take-on Success", "value": 0.61, "percentile": 82.0 },
+      { "label": "Tackle Success", "value": 0.61, "percentile": 69.0 }
+    ],
+    "scale": "team"
+  },
+  "styleVector": null,
+  "stylePrototypes": [
+    { "prototypeId": 1, "actionType": "Carries", "stage": 1, "weight": 0.52, "share": 0.27, "alpha": 0.82 },
+    { "prototypeId": 2, "actionType": "Progressive Passes", "stage": 1, "weight": 0.41, "share": 0.22, "alpha": 0.73 }
+  ],
+  "heatmap": {
+    "imageUrl": "/images/player-style.png",
+    "data": null
+  },
+  "vaep": {
+    "total": 4.25,
+    "offensive": 5.12,
+    "defensive": -0.87
+  }
+}

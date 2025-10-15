@@ -295,7 +295,7 @@ export interface MomentumResponse {
 
 export interface DashboardLookupsResponse {
   seasons: number[];
-  teams: Array<{ teamId: string; teamName: string }>;
+  teams: Array<{ teamId: string; teamName: string; shortName?: string }>;
   goalkeepers: Array<{ playerId: string; playerName: string; teamId: string; teamName: string }>;
   matches: Array<{ matchId: string; matchDate: string | null; label: string }>;
   players: Array<{ playerId: string; playerName: string; teamName: string }>;

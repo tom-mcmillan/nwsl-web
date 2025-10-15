@@ -1,0 +1,23 @@
+{
+  "seasons": [2025, 2024, 2023],
+  "teams": [
+    { "teamId": "kc-current", "teamName": "Kansas City Current", "shortName": "KC Current" },
+    { "teamId": "washington-spirit", "teamName": "Washington Spirit", "shortName": "Spirit" },
+    { "teamId": "gotham", "teamName": "Gotham FC", "shortName": "Gotham" },
+    { "teamId": "portland-thorns", "teamName": "Portland Thorns", "shortName": "Thorns" },
+    { "teamId": "orlando-pride", "teamName": "Orlando Pride", "shortName": "Pride" }
+  ],
+  "goalkeepers": [
+    { "playerId": "ashlyn-harris", "playerName": "Ashlyn Harris", "teamId": "orlando-pride", "teamName": "Orlando Pride" },
+    { "playerId": "adrianna-franch", "playerName": "Adrianna Franch", "teamId": "kc-current", "teamName": "Kansas City Current" }
+  ],
+  "matches": [
+    { "matchId": "match-001", "matchDate": "2025-06-15", "label": "KC Current vs Spirit" },
+    { "matchId": "match-002", "matchDate": "2025-06-17", "label": "Gotham vs Thorns" }
+  ],
+  "players": [
+    { "playerId": "nadener", "playerName": "Kara Nadener", "teamName": "Orlando Pride" },
+    { "playerId": "smith", "playerName": "Sophia Smith", "teamName": "Portland Thorns" },
+    { "playerId": "lavelle", "playerName": "Rose Lavelle", "teamName": "Seattle Reign" }
+  ]
+}
